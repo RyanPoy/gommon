@@ -1,0 +1,2 @@
+# gommon
+golang common libary
