@@ -2,13 +2,14 @@ package ip
 
 import (
 	"gommon/ip/internal"
+	"math/big"
 	"sort"
 	"strings"
 )
 
 type V6 struct {
-	Low      uint64
-	High     uint64
+	Low      big.Int
+	High     big.Int
 	StartStr string
 	EndStr   string
 
@@ -55,12 +56,12 @@ func NewV6s(fpath string) (*V6s, error) {
 		vs[0] = internal.NormalizeV6(vs[0])
 		vs[1] = internal.NormalizeV6(vs[1])
 
-		low := internal.UInt64Of(vs[0])
-		high := internal.UInt64Of(vs[1])
-		if low == 0 || high == 0 {
+		low := internal.UInt128Of(vs[0])
+		high := internal.UInt128Of(vs[1])
+		if low.Sign() == 0 || high.Sign() == 0 {
 			continue
 		}
-		if low > high {
+		if low.Cmp(&high) == 1 {
 			low, high = high, low
 		}
 		countryIdx := v6s.countries.Append(vs[2])
@@ -95,19 +96,20 @@ func (v6s *V6s) Swap(i, j int) {
 
 func (v6s *V6s) Less(i, j int) bool {
 	o1, o2 := v6s.data[i], v6s.data[j]
-	return o1.Low < o2.Low || (o1.Low == o2.Low && o1.High < o2.High)
+	return o1.Low.Cmp(&o2.Low) == -1 || (o1.Low.Cmp(&o2.Low) == 0 && o1.High.Cmp(&o2.High) == -1)
+	//return o1.Low < o2.Low || (o1.Low == o2.Low && o1.High < o2.High)
 }
 
 func (v6s *V6s) Search(ipstr string) *V6 {
 	ipstr = internal.NormalizeV6(ipstr)
-	ipv := internal.UInt64Of(ipstr)
+	ipv := internal.UInt128Of(ipstr)
 
 	// 使用二分查找找到给定IP的合适位置
 	idx := sort.Search(len(v6s.data), func(i int) bool {
 		ip := v6s.data[i]
-		if ip.Low > ipv {
+		if ip.Low.Cmp(&ipv) == 1 {
 			return true
-		} else if ip.High < ipv {
+		} else if ip.High.Cmp(&ipv) == -1 {
 			return false
 		} else {
 			return true
@@ -115,7 +117,7 @@ func (v6s *V6s) Search(ipstr string) *V6 {
 	})
 
 	// 检查找到的index是否在原始区间内
-	if ipv >= v6s.data[idx].Low && ipv <= v6s.data[idx].High {
+	if ipv.Cmp(&v6s.data[idx].Low) != -1 && ipv.Cmp(&v6s.data[idx].High) != 1 {
 		return &v6s.data[idx]
 	}
 	return nil
