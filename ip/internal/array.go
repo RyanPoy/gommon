@@ -1,23 +1,23 @@
-package ip
+package internal
 
 import (
 	"encoding/binary"
 	"net"
 )
 
-func NewArray() *array {
-	return &array{
+func NewArray() *Array {
+	return &Array{
 		items:   make([]string, 0),
 		hashmap: make(map[string]int),
 	}
 }
 
-type array struct {
+type Array struct {
 	items   []string
 	hashmap map[string]int
 }
 
-func (a *array) append(ele string) int {
+func (a *Array) Append(ele string) int {
 	idx, exists := a.hashmap[ele]
 	if !exists {
 		a.items = append(a.items, ele)
@@ -27,7 +27,7 @@ func (a *array) append(ele string) int {
 	return idx
 }
 
-func (a *array) get(idx int) string {
+func (a *Array) Get(idx int) string {
 	return a.items[idx]
 }
 

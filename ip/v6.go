@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-type V4 struct {
-	Low      uint32
-	High     uint32
+type V6 struct {
+	Low      uint64
+	High     uint64
 	StartStr string
 	EndStr   string
 
@@ -19,8 +19,8 @@ type V4 struct {
 	NumberIdx  int
 }
 
-type V4s struct {
-	data      []V4
+type V6s struct {
+	data      []V6
 	countries *internal.Array
 	isps      *internal.Array
 	provs     *internal.Array
@@ -28,14 +28,14 @@ type V4s struct {
 	numbers   *internal.Array
 }
 
-func NewV4s(fpath string) (*V4s, error) {
+func NewV6s(fpath string) (*V6s, error) {
 	lines, err := internal.LoadFile(fpath)
 	if err != nil {
 		return nil, err
 	}
 
-	v4s := &V4s{
-		data:      make([]V4, 0),
+	v6s := &V6s{
+		data:      make([]V6, 0),
 		countries: internal.NewArray(),
 		isps:      internal.NewArray(),
 		provs:     internal.NewArray(),
@@ -52,21 +52,24 @@ func NewV4s(fpath string) (*V4s, error) {
 		if len(vs) != 7 {
 			continue
 		}
-		low := internal.UInt32Of(vs[0])
-		high := internal.UInt32Of(vs[1])
+		vs[0] = internal.NormalizeV6(vs[0])
+		vs[1] = internal.NormalizeV6(vs[1])
+
+		low := internal.UInt64Of(vs[0])
+		high := internal.UInt64Of(vs[1])
 		if low == 0 || high == 0 {
 			continue
 		}
 		if low > high {
 			low, high = high, low
 		}
-		countryIdx := v4s.countries.Append(vs[2])
-		ispIdx := v4s.isps.Append(vs[3])
-		provIdx := v4s.provs.Append(vs[4])
-		cityIdx := v4s.cities.Append(vs[5])
-		numberIdx := v4s.numbers.Append(vs[6])
+		countryIdx := v6s.countries.Append(vs[2])
+		ispIdx := v6s.isps.Append(vs[3])
+		provIdx := v6s.provs.Append(vs[4])
+		cityIdx := v6s.cities.Append(vs[5])
+		numberIdx := v6s.numbers.Append(vs[6])
 
-		v4s.data = append(v4s.data, V4{
+		v6s.data = append(v6s.data, V6{
 			Low:        low,
 			High:       high,
 			StartStr:   vs[0],
@@ -78,29 +81,30 @@ func NewV4s(fpath string) (*V4s, error) {
 			NumberIdx:  numberIdx,
 		})
 	}
-	sort.Sort(v4s)
-	return v4s, nil
+	sort.Sort(v6s)
+	return v6s, nil
 }
 
-func (v4s *V4s) Len() int {
-	return len(v4s.data)
+func (v6s *V6s) Len() int {
+	return len(v6s.data)
 }
 
-func (v4s *V4s) Swap(i, j int) {
-	v4s.data[i], v4s.data[j] = v4s.data[j], v4s.data[i]
+func (v6s *V6s) Swap(i, j int) {
+	v6s.data[i], v6s.data[j] = v6s.data[j], v6s.data[i]
 }
 
-func (v4s *V4s) Less(i, j int) bool {
-	o1, o2 := v4s.data[i], v4s.data[j]
+func (v6s *V6s) Less(i, j int) bool {
+	o1, o2 := v6s.data[i], v6s.data[j]
 	return o1.Low < o2.Low || (o1.Low == o2.Low && o1.High < o2.High)
 }
 
-func (v4s *V4s) Search(ipstr string) *V4 {
-	ipv := internal.UInt32Of(ipstr)
+func (v6s *V6s) Search(ipstr string) *V6 {
+	ipstr = internal.NormalizeV6(ipstr)
+	ipv := internal.UInt64Of(ipstr)
 
 	// 使用二分查找找到给定IP的合适位置
-	idx := sort.Search(len(v4s.data), func(i int) bool {
-		ip := v4s.data[i]
+	idx := sort.Search(len(v6s.data), func(i int) bool {
+		ip := v6s.data[i]
 		if ip.Low > ipv {
 			return true
 		} else if ip.High < ipv {
@@ -111,18 +115,18 @@ func (v4s *V4s) Search(ipstr string) *V4 {
 	})
 
 	// 检查找到的index是否在原始区间内
-	if ipv >= v4s.data[idx].Low && ipv <= v4s.data[idx].High {
-		return &v4s.data[idx]
+	if ipv >= v6s.data[idx].Low && ipv <= v6s.data[idx].High {
+		return &v6s.data[idx]
 	}
 	return nil
 }
 
-func (v4s *V4s) StringOf(v4 *V4) string {
-	return v4.StartStr + "|" +
-		v4.EndStr + "|" +
-		v4s.countries.Get(v4.CountryIdx) + "|" +
-		v4s.isps.Get(v4.IspIdx) + "|" +
-		v4s.provs.Get(v4.ProvIdx) + "|" +
-		v4s.cities.Get(v4.CityIdx) + "|" +
-		v4s.numbers.Get(v4.NumberIdx)
+func (v6s *V6s) StringOf(v6 *V6) string {
+	return v6.StartStr + "|" +
+		v6.EndStr + "|" +
+		v6s.countries.Get(v6.CountryIdx) + "|" +
+		v6s.isps.Get(v6.IspIdx) + "|" +
+		v6s.provs.Get(v6.ProvIdx) + "|" +
+		v6s.cities.Get(v6.CityIdx) + "|" +
+		v6s.numbers.Get(v6.NumberIdx)
 }

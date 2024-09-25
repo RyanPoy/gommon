@@ -5,33 +5,8 @@ import (
 	"testing"
 )
 
-//
-//func TestV4Search(t *testing.T) {
-//	v4Data, _ := LoadV4("./mgiplib-std.txt.latest")
-//	is := NewIntervals(v4Data)
-//	interval := is.Search("223.242.47.30")
-//	expected := "223.242.32.0|223.242.47.255|CN|CT|安徽|芜湖|576074"
-//	if interval == nil {
-//		t.Errorf("Can not find [%s]", "223.242.32.30")
-//	} else if interval.Other != expected {
-//		t.Errorf("Expected[%s], but[%s]", expected, interval.Other)
-//	}
-//}
-//
-//func TestV6Search(t *testing.T) {
-//	ipData, _ := LoadV4("./mgiplib-std.txt.latest")
-//	is := NewIntervals(ipData)
-//	interval := is.Search("223.242.47.30")
-//	expected := "223.242.32.0|223.242.47.255|CN|CT|安徽|芜湖|576074"
-//	if interval == nil {
-//		t.Errorf("Can not find [%s]", "223.242.32.30")
-//	} else if interval.Other != expected {
-//		t.Errorf("Expected[%s], but[%s]", expected, interval.Other)
-//	}
-//}
-
 func TestV4Search(t *testing.T) {
-	v4s, err := ip.NewV4s("./mgiplib-std.txt.latest")
+	v4s, err := ip.NewV4s("./test_data/mgiplib-std.txt.latest")
 	if err != nil {
 		t.Errorf("Can not load v4 data file, %v", err)
 		return
