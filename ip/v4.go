@@ -1,7 +1,9 @@
 package ip
 
 import (
+	"encoding/binary"
 	"gommon/ip/internal"
+	"net"
 	"sort"
 	"strings"
 )
@@ -52,8 +54,8 @@ func NewV4s(fpath string) (*V4s, error) {
 		if len(vs) != 7 {
 			continue
 		}
-		low := internal.UInt32Of(vs[0])
-		high := internal.UInt32Of(vs[1])
+		low := uint32Of(vs[0])
+		high := uint32Of(vs[1])
 		if low == 0 || high == 0 {
 			continue
 		}
@@ -96,7 +98,7 @@ func (v4s *V4s) Less(i, j int) bool {
 }
 
 func (v4s *V4s) Search(ipstr string) *V4 {
-	ipv := internal.UInt32Of(ipstr)
+	ipv := uint32Of(ipstr)
 	if ipv == 0 {
 		return nil
 	}
@@ -127,4 +129,16 @@ func (v4s *V4s) StringOf(v4 *V4) string {
 		v4s.provs.Get(v4.ProvIdx) + "|" +
 		v4s.cities.Get(v4.CityIdx) + "|" +
 		v4s.numbers.Get(v4.NumberIdx)
+}
+
+func uint32Of(v4 string) uint32 {
+	ip := net.ParseIP(v4)
+	if ip == nil {
+		return 0
+	}
+	v := ip.To4()
+	if v == nil {
+		return 0
+	}
+	return binary.BigEndian.Uint32(v)
 }

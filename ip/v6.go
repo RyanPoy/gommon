@@ -52,8 +52,8 @@ func NewV6s(fpath string) (*V6s, error) {
 		if len(vs) != 7 {
 			continue
 		}
-		low := internal.UInt128Of(vs[0])
-		high := internal.UInt128Of(vs[1])
+		low := internal.FromIpv6(vs[0])
+		high := internal.FromIpv6(vs[1])
 		if low == nil || high == nil {
 			continue
 		}
@@ -96,7 +96,7 @@ func (v6s *V6s) Less(i, j int) bool {
 }
 
 func (v6s *V6s) Search(ipstr string) *V6 {
-	ipv := internal.UInt128Of(ipstr)
+	ipv := internal.FromIpv6(ipstr)
 	if ipv == nil {
 		return nil
 	}
