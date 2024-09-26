@@ -2,6 +2,7 @@ package ip_test
 
 import (
 	"gommon/ip"
+	"strings"
 	"testing"
 )
 
@@ -74,4 +75,20 @@ func TestV6TableComplexSearch(t *testing.T) {
 			return
 		}
 	}
+}
+
+func getAllIpv6(fpath string) ([]string, error) {
+	lines, err := ip.LoadFile(fpath)
+	if err != nil {
+		return nil, err
+	}
+	relt := make([]string, 0)
+	for _, l := range lines {
+		if len(l) > 0 && l[0] == '#' {
+			continue
+		}
+		parts := strings.Split(l, "|")
+		relt = append(relt, parts[0])
+	}
+	return relt, nil
 }

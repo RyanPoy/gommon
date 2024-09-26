@@ -30,8 +30,8 @@ func ParseV4Range(line string, table *IPTable) IPRange {
 	if len(vs) != 7 {
 		return nil
 	}
-	low := uint32Of(vs[0])
-	high := uint32Of(vs[1])
+	low := u32(vs[0])
+	high := u32(vs[1])
 	if low == 0 || high == 0 {
 		return nil
 	}
@@ -108,4 +108,15 @@ func bigInt(ipStr string) *internal.Int128 {
 		H: binary.BigEndian.Uint64(v[0:8]),
 		L: binary.BigEndian.Uint64(v[8:16]),
 	}
+}
+func u32(v4 string) uint32 {
+	ip := net.ParseIP(v4)
+	if ip == nil {
+		return 0
+	}
+	v := ip.To4()
+	if v == nil {
+		return 0
+	}
+	return binary.BigEndian.Uint32(v)
 }
