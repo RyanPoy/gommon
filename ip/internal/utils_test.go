@@ -23,9 +23,5 @@ func TestNormalizeV6Str(t *testing.T) {
 		if internal.UInt128Of(expected).Cmp(internal.UInt128Of(short)) != 0 {
 			t.Fatalf("[%d] -> expected [%s], but [%s]", i, expected, short)
 		}
-		//full := internal.NormalizeV6(short)
-		//if full != expected {
-		//	t.Fatalf("[%d] -> expected [%s], but [%s]", i, expected, full)
-		//}
 	}
 }

@@ -3,7 +3,6 @@ package internal
 import (
 	"bufio"
 	"encoding/binary"
-	"math/big"
 	"net"
 	"os"
 	"strings"
@@ -23,7 +22,7 @@ func LoadFile(fpath string) ([]string, error) {
 	return lines, nil
 }
 
-func UInt128Of(v6 string) *big.Int {
+func UInt128Of(v6 string) *Int128 {
 	ip := net.ParseIP(v6)
 	if ip == nil {
 		return nil
@@ -32,7 +31,10 @@ func UInt128Of(v6 string) *big.Int {
 	if v == nil {
 		return nil
 	}
-	return big.NewInt(0).SetBytes(v)
+	return &Int128{
+		h: binary.BigEndian.Uint64(v[0:8]),
+		l: binary.BigEndian.Uint64(v[8:16]),
+	}
 }
 
 func UInt32Of(v4 string) uint32 {

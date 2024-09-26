@@ -2,14 +2,13 @@ package ip
 
 import (
 	"gommon/ip/internal"
-	"math/big"
 	"sort"
 	"strings"
 )
 
 type V6 struct {
-	Low      *big.Int
-	High     *big.Int
+	Low      *internal.Int128
+	High     *internal.Int128
 	StartStr string
 	EndStr   string
 
@@ -115,6 +114,7 @@ func (v6s *V6s) Search(ipstr string) *V6 {
 	})
 
 	// 检查找到的index是否在原始区间内
+	// 即：ipv <= v6s.data[idx].low && ipv >= v6s.data[idx].high
 	if ipv.Cmp(v6s.data[idx].Low) != -1 && ipv.Cmp(v6s.data[idx].High) != 1 {
 		return &v6s.data[idx]
 	}
