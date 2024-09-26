@@ -67,8 +67,8 @@ func ParseV6Range(line string, table *IPTable) IPRange {
 		return nil
 	}
 
-	low := bigInt(vs[0])
-	high := bigInt(vs[1])
+	low := internal.NewI128From(vs[0])
+	high := internal.NewI128From(vs[1])
 	if low == nil || high == nil {
 		return nil
 	}
@@ -95,20 +95,6 @@ func ParseV6Range(line string, table *IPTable) IPRange {
 	}
 }
 
-func bigInt(ipStr string) *internal.Int128 {
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		return nil
-	}
-	v := ip.To16()
-	if v == nil {
-		return nil
-	}
-	return &internal.Int128{
-		H: binary.BigEndian.Uint64(v[0:8]),
-		L: binary.BigEndian.Uint64(v[8:16]),
-	}
-}
 func u32(v4 string) uint32 {
 	ip := net.ParseIP(v4)
 	if ip == nil {

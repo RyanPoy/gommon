@@ -40,3 +40,19 @@ func NewI128From(ipStr string) *Int128 {
 		L: binary.BigEndian.Uint64(v[8:16]),
 	}
 }
+
+func ParseIPv6(ipStr string) net.IP {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return nil
+	}
+	return ip.To16()
+}
+
+func ParseIPv4(ipStr string) net.IP {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return nil
+	}
+	return ip.To4()
+}

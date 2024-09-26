@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"net"
+	"gommon/ip/internal"
 	"sort"
 )
 
@@ -12,19 +12,15 @@ type Searcher interface {
 type V4Searcher struct{}
 
 func (s *V4Searcher) Search(ipStr string, table *IPTable) IPRange {
-	ip := net.ParseIP(ipStr)
+	ip := internal.ParseIPv4(ipStr)
 	if ip == nil {
 		return nil
 	}
-	ipv := ip.To4()
-	if ipv == nil {
-		return nil
-	}
 	idx := sort.Search(len(table.data), func(i int) bool {
-		return table.data[i].GTE(ipv)
+		return table.data[i].GTE(ip)
 	})
 
-	if idx < len(table.data) && table.data[idx].Contains(ipv) {
+	if idx < len(table.data) && table.data[idx].Contains(ip) {
 		return table.data[idx]
 	}
 	return nil
@@ -33,19 +29,12 @@ func (s *V4Searcher) Search(ipStr string, table *IPTable) IPRange {
 type V6Searcher struct{}
 
 func (s *V6Searcher) Search(ipStr string, table *IPTable) IPRange {
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		return nil
-	}
-	ipv := ip.To16()
-	if ipv == nil {
-		return nil
-	}
+	ip := internal.ParseIPv6(ipStr)
 	idx := sort.Search(len(table.data), func(i int) bool {
-		return table.data[i].GTE(ipv)
+		return table.data[i].GTE(ip)
 	})
 
-	if idx < len(table.data) && table.data[idx].Contains(ipv) {
+	if idx < len(table.data) && table.data[idx].Contains(ip) {
 		return table.data[idx]
 	}
 	return nil
