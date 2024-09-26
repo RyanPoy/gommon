@@ -23,16 +23,16 @@ func LoadFile(fpath string) ([]string, error) {
 	return lines, nil
 }
 
-func UInt128Of(v6 string) big.Int {
+func UInt128Of(v6 string) *big.Int {
 	ip := net.ParseIP(v6)
 	if ip == nil {
-		return *big.NewInt(0)
+		return nil
 	}
 	v := ip.To16()
 	if v == nil {
-		return *big.NewInt(0)
+		return nil
 	}
-	return *big.NewInt(0).SetBytes(v)
+	return big.NewInt(0).SetBytes(v)
 }
 
 func UInt32Of(v4 string) uint32 {
@@ -51,6 +51,10 @@ func NormalizeV6(v6 string) string {
 	if v6 == "::" {
 		return "0000:0000:0000:0000:0000:0000:0000:0000"
 	}
+	if len(v6) == 39 { // 认为这个长度就是正确的ipv6长度
+		return v6
+	}
+
 	cnt := strings.Count(v6, "::")
 	if cnt == 0 || cnt > 1 {
 		return v6
