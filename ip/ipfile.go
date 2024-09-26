@@ -2,7 +2,8 @@ package ip
 
 import (
 	"bufio"
-	"math/big"
+	"encoding/binary"
+	"gommon/ip/internal"
 	"net"
 	"os"
 	"strings"
@@ -94,7 +95,7 @@ func ParseV6Range(line string, table *IPTable) IPRange {
 	}
 }
 
-func bigInt(ipStr string) *big.Int {
+func bigInt(ipStr string) *internal.Int128 {
 	ip := net.ParseIP(ipStr)
 	if ip == nil {
 		return nil
@@ -103,5 +104,8 @@ func bigInt(ipStr string) *big.Int {
 	if v == nil {
 		return nil
 	}
-	return new(big.Int).SetBytes(v)
+	return &internal.Int128{
+		H: binary.BigEndian.Uint64(v[0:8]),
+		L: binary.BigEndian.Uint64(v[8:16]),
+	}
 }

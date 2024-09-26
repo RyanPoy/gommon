@@ -2,7 +2,7 @@ package ip
 
 import (
 	"encoding/binary"
-	"math/big"
+	"gommon/ip/internal"
 	"net"
 )
 
@@ -86,8 +86,8 @@ func (r *V4Range) Contains(ip net.IP) bool {
 //
 
 type V6Range struct {
-	low        *big.Int
-	high       *big.Int
+	low        *internal.Int128
+	high       *internal.Int128
 	startStr   string
 	endStr     string
 	countryIdx int
@@ -129,7 +129,10 @@ func (r *V6Range) Cmp(other IPRange) int {
 }
 
 func (r *V6Range) GTE(ip net.IP) bool {
-	ipv := new(big.Int).SetBytes(ip)
+	ipv := &internal.Int128{
+		H: binary.BigEndian.Uint64(ip[0:8]),
+		L: binary.BigEndian.Uint64(ip[8:16]),
+	}
 	if r.low.Cmp(ipv) == 1 {
 		return true
 	}
@@ -137,8 +140,10 @@ func (r *V6Range) GTE(ip net.IP) bool {
 }
 
 func (r *V6Range) Contains(ip net.IP) bool {
-	ipv := new(big.Int).SetBytes(ip)
-
+	ipv := &internal.Int128{
+		H: binary.BigEndian.Uint64(ip[0:8]),
+		L: binary.BigEndian.Uint64(ip[8:16]),
+	}
 	// 检查找到的index是否在原始区间内
 	// 即：ipv <= r.low && ipv >= r.high
 	return ipv.Cmp(r.low) != -1 && ipv.Cmp(r.high) != 1
