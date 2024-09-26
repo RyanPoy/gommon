@@ -73,7 +73,6 @@ func NewV6Table(fpath string) (*IPTable, error) {
 }
 
 func newTable(fpath string, table *IPTable, parseRange func(string, *IPTable) IPRange) (*IPTable, error) {
-
 	lines, err := LoadFile(fpath)
 	if err != nil {
 		return nil, err
