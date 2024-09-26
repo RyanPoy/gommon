@@ -56,39 +56,32 @@ func NormalizeV6(v6 string) string {
 	}
 
 	cnt := strings.Count(v6, "::")
-	if cnt == 0 || cnt > 1 {
-		return v6
-	}
-
-	vs := strings.Split(v6, "::")
-	if len(vs) != 2 {
+	if cnt != 1 {
 		return v6
 	}
 	// 到这里一定是有1个::的字符串了
-	cnt1, cnt2 := strings.Count(vs[0], ":"), strings.Count(vs[1], ":")
-	if cnt1+cnt2+2 >= 8 {
-		return v6
-	}
-	tmp := make([]string, 0)
-	for i := 0; i < 8-cnt1-cnt2-2; i++ {
-		tmp = append(tmp, "0000")
+
+	// "::" 分割左右部分
+	parts := strings.Split(v6, "::")
+	leftPart := strings.Split(parts[0], ":")
+	rightPart := strings.Split(parts[1], ":")
+
+	// 计算需要补全的 "0000" 的数量
+	zerosToAdd := 8 - len(leftPart) - len(rightPart)
+
+	// 构建补齐后的结果
+	result := make([]string, 0, 8)
+	for _, segment := range leftPart {
+		result = append(result, strings.Repeat("0", 4-len(segment))+segment)
 	}
 
-	r1 := strings.Split(vs[0]+":"+strings.Join(tmp, ":")+":"+vs[1], ":")
-	relt := make([]string, 0)
-	for _, v := range r1 {
-		l := len(v)
-		if l == 0 {
-			relt = append(relt, "0000")
-		} else if l == 1 {
-			relt = append(relt, "000"+v)
-		} else if l == 2 {
-			relt = append(relt, "00"+v)
-		} else if l == 3 {
-			relt = append(relt, "0"+v)
-		} else {
-			relt = append(relt, v)
-		}
+	for i := 0; i < zerosToAdd; i++ {
+		result = append(result, "0000")
 	}
-	return strings.Join(relt, ":")
+
+	for _, segment := range rightPart {
+		result = append(result, strings.Repeat("0", 4-len(segment))+segment)
+	}
+
+	return strings.Join(result, ":")
 }
