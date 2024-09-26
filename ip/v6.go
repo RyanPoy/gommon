@@ -104,17 +104,17 @@ func (v6s *V6s) Search(ipstr string) *V6 {
 	// 使用二分查找找到给定IP的合适位置
 	idx := sort.Search(len(v6s.data), func(i int) bool {
 		ip := v6s.data[i]
-		if ip.Low.Cmp(ipv) == 1 {
-			return true
-		}
-		return ip.High.Cmp(ipv) == -1
 		//if ip.Low.Cmp(ipv) == 1 {
 		//	return true
-		//} else if ip.High.Cmp(ipv) == -1 {
-		//	return false
-		//} else {
-		//	return true
 		//}
+		//return ip.High.Cmp(ipv) == -1
+		if ip.Low.Cmp(ipv) == 1 {
+			return true
+		} else if ip.High.Cmp(ipv) == -1 {
+			return false
+		} else {
+			return true
+		}
 	})
 
 	// 检查找到的index是否在原始区间内
