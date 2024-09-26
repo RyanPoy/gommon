@@ -107,8 +107,11 @@ func (v4s *V4s) Search(ipstr string) *V4 {
 		ip := v4s.data[i]
 		if ip.Low > ipv {
 			return true
+		} else if ip.High < ipv {
+			return false
+		} else {
+			return true
 		}
-		return ip.High >= ipv
 	})
 
 	// 检查找到的index是否在原始区间内
