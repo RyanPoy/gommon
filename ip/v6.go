@@ -106,11 +106,15 @@ func (v6s *V6s) Search(ipstr string) *V6 {
 		ip := v6s.data[i]
 		if ip.Low.Cmp(ipv) == 1 {
 			return true
-		} else if ip.High.Cmp(ipv) == -1 {
-			return false
-		} else {
-			return true
 		}
+		return ip.High.Cmp(ipv) == -1
+		//if ip.Low.Cmp(ipv) == 1 {
+		//	return true
+		//} else if ip.High.Cmp(ipv) == -1 {
+		//	return false
+		//} else {
+		//	return true
+		//}
 	})
 
 	// 检查找到的index是否在原始区间内
