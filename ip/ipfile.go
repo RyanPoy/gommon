@@ -2,9 +2,7 @@ package ip
 
 import (
 	"bufio"
-	"encoding/binary"
-	"gommon/ip/internal"
-	"net"
+	"gommon/convert"
 	"os"
 	"strings"
 )
@@ -30,8 +28,8 @@ func ParseV4Range(line string, table *IPTable) IPRange {
 	if len(vs) != 7 {
 		return nil
 	}
-	low := u32(vs[0])
-	high := u32(vs[1])
+	low := convert.IPStr2Uint32(vs[0])
+	high := convert.IPStr2Uint32(vs[1])
 	if low == 0 || high == 0 {
 		return nil
 	}
@@ -67,8 +65,8 @@ func ParseV6Range(line string, table *IPTable) IPRange {
 		return nil
 	}
 
-	low := internal.NewI128From(vs[0])
-	high := internal.NewI128From(vs[1])
+	low := convert.IPStr2Int128(vs[0])
+	high := convert.IPStr2Int128(vs[1])
 	if low == nil || high == nil {
 		return nil
 	}
@@ -93,16 +91,4 @@ func ParseV6Range(line string, table *IPTable) IPRange {
 		cityIdx:    cityIdx,
 		numberIdx:  numberIdx,
 	}
-}
-
-func u32(v4 string) uint32 {
-	ip := net.ParseIP(v4)
-	if ip == nil {
-		return 0
-	}
-	v := ip.To4()
-	if v == nil {
-		return 0
-	}
-	return binary.BigEndian.Uint32(v)
 }

@@ -1,4 +1,4 @@
-package internal
+package extends
 
 func NewArray() *Array {
 	return &Array{

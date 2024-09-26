@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"gommon/ip/internal"
+	"gommon/convert"
 	"sort"
 )
 
@@ -12,7 +12,7 @@ type Searcher interface {
 type V4Searcher struct{}
 
 func (s *V4Searcher) Search(ipStr string, table *IPTable) IPRange {
-	ip := internal.ParseIPv4(ipStr)
+	ip := convert.IPStr2IPv4(ipStr)
 	if ip == nil {
 		return nil
 	}
@@ -29,7 +29,7 @@ func (s *V4Searcher) Search(ipStr string, table *IPTable) IPRange {
 type V6Searcher struct{}
 
 func (s *V6Searcher) Search(ipStr string, table *IPTable) IPRange {
-	ip := internal.ParseIPv6(ipStr)
+	ip := convert.IPStr2IPv6(ipStr)
 	idx := sort.Search(len(table.data), func(i int) bool {
 		return table.data[i].GTE(ip)
 	})

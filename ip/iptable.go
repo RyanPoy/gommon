@@ -1,17 +1,17 @@
 package ip
 
 import (
-	"gommon/ip/internal"
+	"gommon/extends"
 	"sort"
 )
 
 type IPTable struct {
 	data      []IPRange
-	countries *internal.Array
-	isps      *internal.Array
-	provs     *internal.Array
-	cities    *internal.Array
-	numbers   *internal.Array
+	countries *extends.Array
+	isps      *extends.Array
+	provs     *extends.Array
+	cities    *extends.Array
+	numbers   *extends.Array
 
 	searcher Searcher
 }
@@ -49,11 +49,11 @@ func (t *IPTable) Search(ipStr string) IPRange {
 func NewV4Table(fpath string) (*IPTable, error) {
 	table := &IPTable{
 		data:      make([]IPRange, 0),
-		countries: internal.NewArray(),
-		isps:      internal.NewArray(),
-		provs:     internal.NewArray(),
-		cities:    internal.NewArray(),
-		numbers:   internal.NewArray(),
+		countries: extends.NewArray(),
+		isps:      extends.NewArray(),
+		provs:     extends.NewArray(),
+		cities:    extends.NewArray(),
+		numbers:   extends.NewArray(),
 		searcher:  &V4Searcher{},
 	}
 	return newTable(fpath, table, ParseV4Range)
@@ -62,11 +62,11 @@ func NewV4Table(fpath string) (*IPTable, error) {
 func NewV6Table(fpath string) (*IPTable, error) {
 	table := &IPTable{
 		data:      make([]IPRange, 0),
-		countries: internal.NewArray(),
-		isps:      internal.NewArray(),
-		provs:     internal.NewArray(),
-		cities:    internal.NewArray(),
-		numbers:   internal.NewArray(),
+		countries: extends.NewArray(),
+		isps:      extends.NewArray(),
+		provs:     extends.NewArray(),
+		cities:    extends.NewArray(),
+		numbers:   extends.NewArray(),
 		searcher:  &V6Searcher{},
 	}
 	return newTable(fpath, table, ParseV6Range)

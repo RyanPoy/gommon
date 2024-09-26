@@ -2,7 +2,7 @@ package ip
 
 import (
 	"encoding/binary"
-	"gommon/ip/internal"
+	"gommon/extends"
 	"net"
 )
 
@@ -86,8 +86,8 @@ func (r *V4Range) Contains(ip net.IP) bool {
 //
 
 type V6Range struct {
-	low        *internal.Int128
-	high       *internal.Int128
+	low        *extends.Int128
+	high       *extends.Int128
 	startStr   string
 	endStr     string
 	countryIdx int
@@ -129,7 +129,7 @@ func (r *V6Range) Cmp(other IPRange) int {
 }
 
 func (r *V6Range) GTE(ip net.IP) bool {
-	ipv := &internal.Int128{
+	ipv := &extends.Int128{
 		H: binary.BigEndian.Uint64(ip[0:8]),
 		L: binary.BigEndian.Uint64(ip[8:16]),
 	}
@@ -140,7 +140,7 @@ func (r *V6Range) GTE(ip net.IP) bool {
 }
 
 func (r *V6Range) Contains(ip net.IP) bool {
-	ipv := &internal.Int128{
+	ipv := &extends.Int128{
 		H: binary.BigEndian.Uint64(ip[0:8]),
 		L: binary.BigEndian.Uint64(ip[8:16]),
 	}
