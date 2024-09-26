@@ -1,10 +1,5 @@
 package internal
 
-import (
-	"encoding/binary"
-	"net"
-)
-
 func NewArray() *Array {
 	return &Array{
 		items:   make([]string, 0),
@@ -29,16 +24,4 @@ func (a *Array) Append(ele string) int {
 
 func (a *Array) Get(idx int) string {
 	return a.items[idx]
-}
-
-func uInt64Of(v6 string) uint64 {
-	ip := net.ParseIP(v6)
-	if ip == nil {
-		return 0
-	}
-	v := ip.To16()
-	if v == nil {
-		return 0
-	}
-	return binary.BigEndian.Uint64(v)
 }
