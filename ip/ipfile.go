@@ -2,7 +2,8 @@ package ip
 
 import (
 	"bufio"
-	"gommon/ip/internal"
+	"math/big"
+	"net"
 	"os"
 	"strings"
 )
@@ -65,8 +66,8 @@ func ParseV6Range(line string, table *IPTable) IPRange {
 		return nil
 	}
 
-	low := internal.FromIpv6(vs[0])
-	high := internal.FromIpv6(vs[1])
+	low := bigInt(vs[0])
+	high := bigInt(vs[1])
 	if low == nil || high == nil {
 		return nil
 	}
@@ -91,4 +92,16 @@ func ParseV6Range(line string, table *IPTable) IPRange {
 		cityIdx:    cityIdx,
 		numberIdx:  numberIdx,
 	}
+}
+
+func bigInt(ipStr string) *big.Int {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return nil
+	}
+	v := ip.To16()
+	if v == nil {
+		return nil
+	}
+	return new(big.Int).SetBytes(v)
 }

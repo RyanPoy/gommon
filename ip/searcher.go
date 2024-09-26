@@ -1,7 +1,7 @@
 package ip
 
 import (
-	"gommon/ip/internal"
+	"net"
 	"sort"
 )
 
@@ -12,15 +12,19 @@ type Searcher interface {
 type V4Searcher struct{}
 
 func (s *V4Searcher) Search(ipStr string, table *IPTable) IPRange {
-	ip := uint32Of(ipStr)
-	if ip == 0 {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return nil
+	}
+	ipv := ip.To4()
+	if ipv == nil {
 		return nil
 	}
 	idx := sort.Search(len(table.data), func(i int) bool {
-		return table.data[i].GTE(ipStr)
+		return table.data[i].GTE(ipv)
 	})
 
-	if idx < len(table.data) && table.data[idx].Contains(&ip) {
+	if idx < len(table.data) && table.data[idx].Contains(ipv) {
 		return table.data[idx]
 	}
 	return nil
@@ -29,12 +33,16 @@ func (s *V4Searcher) Search(ipStr string, table *IPTable) IPRange {
 type V6Searcher struct{}
 
 func (s *V6Searcher) Search(ipStr string, table *IPTable) IPRange {
-	ipv := internal.FromIpv6(ipStr)
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return nil
+	}
+	ipv := ip.To16()
 	if ipv == nil {
 		return nil
 	}
 	idx := sort.Search(len(table.data), func(i int) bool {
-		return table.data[i].GTE(ipStr)
+		return table.data[i].GTE(ipv)
 	})
 
 	if idx < len(table.data) && table.data[idx].Contains(ipv) {

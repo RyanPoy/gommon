@@ -1,7 +1,9 @@
 package ip
 
 import (
-	"gommon/ip/internal"
+	"encoding/binary"
+	"math/big"
+	"net"
 )
 
 type IPRange interface {
@@ -14,8 +16,8 @@ type IPRange interface {
 	NumberIdx() int
 
 	Cmp(IPRange) int
-	GTE(ipStr string) bool
-	Contains(ipValue interface{}) bool
+	GTE(ip net.IP) bool
+	Contains(ip net.IP) bool
 }
 
 type V4Range struct {
@@ -66,16 +68,16 @@ func (r *V4Range) Cmp(other IPRange) int {
 	return 0
 }
 
-func (r *V4Range) GTE(ipStr string) bool {
-	ipv := uint32Of(ipStr)
+func (r *V4Range) GTE(ip net.IP) bool {
+	ipv := binary.BigEndian.Uint32(ip)
 	if r.low > ipv {
 		return true
 	}
 	return r.high >= ipv
 }
 
-func (r *V4Range) Contains(ipValue interface{}) bool {
-	ipv := *ipValue.(*uint32)
+func (r *V4Range) Contains(ip net.IP) bool {
+	ipv := binary.BigEndian.Uint32(ip)
 	return r.low <= ipv && ipv <= r.high
 }
 
@@ -84,8 +86,8 @@ func (r *V4Range) Contains(ipValue interface{}) bool {
 //
 
 type V6Range struct {
-	low        *internal.Int128
-	high       *internal.Int128
+	low        *big.Int
+	high       *big.Int
 	startStr   string
 	endStr     string
 	countryIdx int
@@ -126,17 +128,17 @@ func (r *V6Range) Cmp(other IPRange) int {
 	return cmpHigh
 }
 
-func (r *V6Range) GTE(ipStr string) bool {
-	ipv := internal.FromIpv6(ipStr)
-
+func (r *V6Range) GTE(ip net.IP) bool {
+	ipv := new(big.Int).SetBytes(ip)
 	if r.low.Cmp(ipv) == 1 {
 		return true
 	}
 	return r.high.Cmp(ipv) != -1
 }
 
-func (r *V6Range) Contains(ipValue interface{}) bool {
-	ipv := ipValue.(*internal.Int128)
+func (r *V6Range) Contains(ip net.IP) bool {
+	ipv := new(big.Int).SetBytes(ip)
+
 	// 检查找到的index是否在原始区间内
 	// 即：ipv <= r.low && ipv >= r.high
 	return ipv.Cmp(r.low) != -1 && ipv.Cmp(r.high) != 1

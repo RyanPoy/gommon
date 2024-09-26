@@ -6,8 +6,8 @@ import (
 )
 
 type Int128 struct {
-	h uint64
-	l uint64
+	H uint64
+	L uint64
 }
 
 func FromIpv6(v6 string) *Int128 {
@@ -20,22 +20,22 @@ func FromIpv6(v6 string) *Int128 {
 		return nil
 	}
 	return &Int128{
-		h: binary.BigEndian.Uint64(v[0:8]),
-		l: binary.BigEndian.Uint64(v[8:16]),
+		H: binary.BigEndian.Uint64(v[0:8]),
+		L: binary.BigEndian.Uint64(v[8:16]),
 	}
 }
 
 func (i *Int128) Cmp(j *Int128) int {
-	if i.h > j.h {
+	if i.H > j.H {
 		return 1
 	}
-	if i.h < j.h {
+	if i.H < j.H {
 		return -1
 	}
-	if i.l > j.l {
+	if i.L > j.L {
 		return 1
 	}
-	if i.l < j.l {
+	if i.L < j.L {
 		return -1
 	}
 	return 0
