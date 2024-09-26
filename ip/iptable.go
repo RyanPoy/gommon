@@ -13,7 +13,7 @@ type IPTable struct {
 	cities    *internal.Array
 	numbers   *internal.Array
 
-	searchFunc func(ipStr string, table *IPTable) IPRange
+	searcher Searcher
 }
 
 func (t *IPTable) Add(x IPRange) {
@@ -43,7 +43,7 @@ func (t *IPTable) StringOf(ipRange IPRange) string {
 }
 
 func (t *IPTable) Search(ipStr string) IPRange {
-	return t.searchFunc(ipStr, t)
+	return t.searcher.Search(ipStr, t)
 }
 
 func NewV4Table(fpath string) (*IPTable, error) {
@@ -54,20 +54,7 @@ func NewV4Table(fpath string) (*IPTable, error) {
 		provs:     internal.NewArray(),
 		cities:    internal.NewArray(),
 		numbers:   internal.NewArray(),
-		searchFunc: func(ipStr string, table *IPTable) IPRange {
-			ip := uint32Of(ipStr)
-			if ip == 0 {
-				return nil
-			}
-			idx := sort.Search(len(table.data), func(i int) bool {
-				return table.data[i].GTE(ipStr)
-			})
-
-			if idx < len(table.data) && table.data[idx].Contains(&ip) {
-				return table.data[idx]
-			}
-			return nil
-		},
+		searcher:  &V4Searcher{},
 	}
 	return newTable(fpath, table, ParseV4Range)
 }
@@ -80,27 +67,14 @@ func NewV6Table(fpath string) (*IPTable, error) {
 		provs:     internal.NewArray(),
 		cities:    internal.NewArray(),
 		numbers:   internal.NewArray(),
-		searchFunc: func(ipStr string, table *IPTable) IPRange {
-			ipv := internal.FromIpv6(ipStr)
-			if ipv == nil {
-				return nil
-			}
-			idx := sort.Search(len(table.data), func(i int) bool {
-				return table.data[i].GTE(ipStr)
-			})
-
-			if idx < len(table.data) && table.data[idx].Contains(ipv) {
-				return table.data[idx]
-			}
-			return nil
-		},
+		searcher:  &V6Searcher{},
 	}
 	return newTable(fpath, table, ParseV6Range)
 }
 
 func newTable(fpath string, table *IPTable, parseRange func(string, *IPTable) IPRange) (*IPTable, error) {
 
-	lines, err := internal.LoadFile(fpath)
+	lines, err := LoadFile(fpath)
 	if err != nil {
 		return nil, err
 	}

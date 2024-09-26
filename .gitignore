@@ -4,3 +4,5 @@ gommon.iml
 go.sum
 mgiplib-std.txt.latest
 mgiplib-v6-std.txt.latest
+main.go
+cpu.prof

@@ -31,7 +31,7 @@ type V4s struct {
 }
 
 func NewV4s(fpath string) (*V4s, error) {
-	lines, err := internal.LoadFile(fpath)
+	lines, err := LoadFile(fpath)
 	if err != nil {
 		return nil, err
 	}

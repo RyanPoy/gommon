@@ -2,7 +2,6 @@ package ip_test
 
 import (
 	"gommon/ip"
-	"gommon/ip/internal"
 	"strings"
 	"testing"
 )
@@ -54,7 +53,7 @@ func TestV6ComplexSearch(t *testing.T) {
 }
 
 func getAllIpv6(fpath string) ([]string, error) {
-	lines, err := internal.LoadFile(fpath)
+	lines, err := ip.LoadFile(fpath)
 	if err != nil {
 		return nil, err
 	}

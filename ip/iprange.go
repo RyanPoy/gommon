@@ -2,7 +2,6 @@ package ip
 
 import (
 	"gommon/ip/internal"
-	"strings"
 )
 
 type IPRange interface {
@@ -141,77 +140,4 @@ func (r *V6Range) Contains(ipValue interface{}) bool {
 	// 检查找到的index是否在原始区间内
 	// 即：ipv <= r.low && ipv >= r.high
 	return ipv.Cmp(r.low) != -1 && ipv.Cmp(r.high) != 1
-}
-
-func ParseV4Range(line string, table *IPTable) IPRange {
-	if line[0] == '#' {
-		return nil
-	}
-	vs := strings.Split(line, "|")
-	if len(vs) != 7 {
-		return nil
-	}
-	low := uint32Of(vs[0])
-	high := uint32Of(vs[1])
-	if low == 0 || high == 0 {
-		return nil
-	}
-	if low > high {
-		low, high = high, low
-	}
-
-	countryIdx := table.countries.Append(vs[2])
-	ispIdx := table.isps.Append(vs[3])
-	provIdx := table.provs.Append(vs[4])
-	cityIdx := table.cities.Append(vs[5])
-	numberIdx := table.numbers.Append(vs[6])
-
-	return &V4Range{
-		low:        low,
-		high:       high,
-		startStr:   vs[0],
-		endStr:     vs[1],
-		countryIdx: countryIdx,
-		ispIdx:     ispIdx,
-		provIdx:    provIdx,
-		cityIdx:    cityIdx,
-		numberIdx:  numberIdx,
-	}
-}
-
-func ParseV6Range(line string, table *IPTable) IPRange {
-	if line[0] == '#' {
-		return nil
-	}
-	vs := strings.Split(line, "|")
-	if len(vs) != 7 {
-		return nil
-	}
-
-	low := internal.FromIpv6(vs[0])
-	high := internal.FromIpv6(vs[1])
-	if low == nil || high == nil {
-		return nil
-	}
-	if low.Cmp(high) == 1 {
-		low, high = high, low
-	}
-
-	countryIdx := table.countries.Append(vs[2])
-	ispIdx := table.isps.Append(vs[3])
-	provIdx := table.provs.Append(vs[4])
-	cityIdx := table.cities.Append(vs[5])
-	numberIdx := table.numbers.Append(vs[6])
-
-	return &V6Range{
-		low:        low,
-		high:       high,
-		startStr:   vs[0],
-		endStr:     vs[1],
-		countryIdx: countryIdx,
-		ispIdx:     ispIdx,
-		provIdx:    provIdx,
-		cityIdx:    cityIdx,
-		numberIdx:  numberIdx,
-	}
 }

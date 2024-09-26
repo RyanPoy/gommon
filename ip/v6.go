@@ -29,7 +29,7 @@ type V6s struct {
 }
 
 func NewV6s(fpath string) (*V6s, error) {
-	lines, err := internal.LoadFile(fpath)
+	lines, err := LoadFile(fpath)
 	if err != nil {
 		return nil, err
 	}
