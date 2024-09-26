@@ -53,9 +53,6 @@ func NewV6s(fpath string) (*V6s, error) {
 		if len(vs) != 7 {
 			continue
 		}
-		vs[0] = internal.NormalizeV6(vs[0])
-		vs[1] = internal.NormalizeV6(vs[1])
-
 		low := internal.UInt128Of(vs[0])
 		high := internal.UInt128Of(vs[1])
 		if low == nil || high == nil {
@@ -100,8 +97,10 @@ func (v6s *V6s) Less(i, j int) bool {
 }
 
 func (v6s *V6s) Search(ipstr string) *V6 {
-	ipstr = internal.NormalizeV6(ipstr)
 	ipv := internal.UInt128Of(ipstr)
+	if ipv == nil {
+		return nil
+	}
 
 	// 使用二分查找找到给定IP的合适位置
 	idx := sort.Search(len(v6s.data), func(i int) bool {

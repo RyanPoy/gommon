@@ -97,7 +97,9 @@ func (v4s *V4s) Less(i, j int) bool {
 
 func (v4s *V4s) Search(ipstr string) *V4 {
 	ipv := internal.UInt32Of(ipstr)
-
+	if ipv == 0 {
+		return nil
+	}
 	// 使用二分查找找到给定IP的合适位置
 	idx := sort.Search(len(v4s.data), func(i int) bool {
 		ip := v4s.data[i]
