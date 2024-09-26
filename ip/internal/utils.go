@@ -70,18 +70,37 @@ func NormalizeV6(v6 string) string {
 	zerosToAdd := 8 - len(leftPart) - len(rightPart)
 
 	// 构建补齐后的结果
-	result := make([]string, 0, 8)
-	for _, segment := range leftPart {
-		result = append(result, strings.Repeat("0", 4-len(segment))+segment)
+	result := make([]string, 8)
+	idx := 0
+	for i := range leftPart {
+		result[idx] = zeroPad(leftPart[i])
+		idx++
 	}
 
 	for i := 0; i < zerosToAdd; i++ {
-		result = append(result, "0000")
+		result[idx] = "0000"
+		idx++
 	}
 
-	for _, segment := range rightPart {
-		result = append(result, strings.Repeat("0", 4-len(segment))+segment)
+	for i := range rightPart {
+		result[idx] = zeroPad(rightPart[i])
+		idx++
 	}
 
 	return strings.Join(result, ":")
+}
+
+func zeroPad(s string) string {
+	switch len(s) {
+	case 0:
+		return "0000"
+	case 1:
+		return "000" + s
+	case 2:
+		return "00" + s
+	case 3:
+		return "0" + s
+	default:
+		return s
+	}
 }
