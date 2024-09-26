@@ -16,21 +16,10 @@ func main() {
 	}()
 
 	// 你的应用逻辑
-	runApp2()
+	runApp()
 }
 
-func runApp1() {
-	fpath := "./ip/test_data/mgiplib-v6-std.txt.latest"
-	v6s, _ := ip.NewV6s(fpath)
-	ips, _ := LoadV6(fpath)
-	for {
-		for _, v := range ips {
-			v6s.Search(v)
-		}
-	}
-}
-
-func runApp2() {
+func runApp() {
 	fpath := "./ip/test_data/mgiplib-v6-std.txt.latest"
 	v6s, _ := ip.NewV6Table(fpath)
 	ips, _ := LoadV6(fpath)
