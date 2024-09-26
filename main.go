@@ -16,7 +16,7 @@ func main() {
 	}()
 
 	// 你的应用逻辑
-	runApp1()
+	runApp2()
 }
 
 func runApp1() {
