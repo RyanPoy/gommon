@@ -44,8 +44,8 @@ func parseRange(line string, table *IPTable, isV4 bool) IPRange {
 
 	if isV4 {
 		return &V4Range{
-			low:        low.(uint32),
-			high:       high.(uint32),
+			low:        *low.(*uint32),
+			high:       *high.(*uint32),
 			startStr:   vs[0],
 			endStr:     vs[1],
 			countryIdx: table.countries.Append(vs[2]),
@@ -72,11 +72,11 @@ func parseLowAndHigh(lowStr, highStr string, isV4 bool) (interface{}, interface{
 	if isV4 {
 		low := convert.IPStr2Uint32(lowStr)
 		high := convert.IPStr2Uint32(highStr)
-		if low == 0 || high == 0 {
+		if low == nil || high == nil {
 			return nil, nil
 		}
-		if low > high {
-			low, high = high, low
+		if *low > *high {
+			*low, *high = *high, *low
 		}
 		return low, high
 	} else {

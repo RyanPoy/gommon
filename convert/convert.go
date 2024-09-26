@@ -17,12 +17,13 @@ func IPStr2Int128(ipStr string) *extends.Int128 {
 	}
 }
 
-func IPStr2Uint32(ipStr string) uint32 {
+func IPStr2Uint32(ipStr string) *uint32 {
 	v := IPStr2IPv4(ipStr)
 	if v == nil {
-		return 0
+		return nil
 	}
-	return binary.BigEndian.Uint32(v)
+	r := binary.BigEndian.Uint32(v)
+	return &r
 }
 func IPStr2IPv6(ipStr string) net.IP {
 	ip := net.ParseIP(ipStr)
