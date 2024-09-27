@@ -1,13 +1,15 @@
 package ip_test
 
 import (
+	"bufio"
 	"gommon/ip"
+	"os"
 	"strings"
 	"testing"
 )
 
 func TestV4TableSimpleSearch(t *testing.T) {
-	table, err := ip.NewTable("./test_data/a.v4.txt")
+	table, err := ip.NewIPTable("./test_data/a.v4.txt")
 	if err != nil {
 		t.Errorf("Can not load ipRange v4s file, %v", err)
 		return
@@ -27,7 +29,7 @@ func TestV4TableSimpleSearch(t *testing.T) {
 }
 
 func TestV4TableSearch(t *testing.T) {
-	table, err := ip.NewTable("./test_data/mgiplib-std.txt.latest")
+	table, err := ip.NewIPTable("./test_data/mgiplib-std.txt.latest")
 	if err != nil {
 		t.Errorf("Can not load ipRange v4s file, %v", err)
 		return
@@ -53,12 +55,12 @@ func TestV4TableSearch(t *testing.T) {
 
 func TestV4TableComplexSearch(t *testing.T) {
 	fpath := "./test_data/mgiplib-std.txt.latest"
-	table, err := ip.NewTable(fpath)
+	table, err := ip.NewIPTable(fpath)
 	if err != nil {
 		t.Errorf("Can not load ipRange v4s file, %v", err)
 		return
 	}
-	searchIps, err := getAllIp(fpath)
+	searchIps, err := loadIP(fpath)
 	if err != nil {
 		t.Errorf("Can not read ipv6 v4s, %v", err)
 		return
@@ -78,7 +80,7 @@ func TestV4TableComplexSearch(t *testing.T) {
 }
 
 func TestV6TableSearch(t *testing.T) {
-	table, err := ip.NewTable("./test_data/mgiplib-v6-std.txt.latest")
+	table, err := ip.NewIPTable("./test_data/mgiplib-v6-std.txt.latest")
 	if err != nil {
 		t.Errorf("Can not load v6 v4s file, %v", err)
 		return
@@ -99,12 +101,12 @@ func TestV6TableSearch(t *testing.T) {
 
 func TestV6TableComplexSearch(t *testing.T) {
 	fpath := "./test_data/mgiplib-v6-std.txt.latest"
-	table, err := ip.NewTable(fpath)
+	table, err := ip.NewIPTable(fpath)
 	if err != nil {
 		t.Errorf("Can not load v6 v4s file, %v", err)
 		return
 	}
-	searchIps, err := getAllIp(fpath)
+	searchIps, err := loadIP(fpath)
 	if err != nil {
 		t.Errorf("Can not read ipv6 v4s, %v", err)
 		return
@@ -122,19 +124,24 @@ func TestV6TableComplexSearch(t *testing.T) {
 		}
 	}
 }
+func loadIP(fpaths ...string) ([]string, error) {
+	lines := make([]string, 0)
 
-func getAllIp(fpath string) ([]string, error) {
-	lines, err := ip.LoadFile(fpath)
-	if err != nil {
-		return nil, err
-	}
-	relt := make([]string, 0)
-	for _, l := range lines {
-		if len(l) > 0 && l[0] == '#' {
-			continue
+	for _, fpath := range fpaths {
+		f, err := os.Open(fpath)
+		if err != nil {
+			return nil, err
 		}
-		parts := strings.Split(l, "|")
-		relt = append(relt, parts[0])
+		defer f.Close()
+
+		for scanner := bufio.NewScanner(f); scanner.Scan(); {
+			line := scanner.Text()
+			if line[0] == '#' || len(line) == 0 || !strings.Contains(line, "|") {
+				continue
+			}
+			lines = append(lines, strings.Split(line, "|")[0])
+		}
 	}
-	return relt, nil
+
+	return lines, nil
 }

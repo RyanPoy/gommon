@@ -20,46 +20,35 @@ func main() {
 }
 
 func runApp() {
-	fpath4 := "./ip/test_data/mgiplib-std.txt.latest"
-	v4s, _ := ip.NewTable(fpath4)
-	ip4s, _ := LoadIP(fpath4)
+	fpaths := []string{"./ip/test_data/mgiplib-std.txt.latest", "./ip/test_data/mgiplib-v6-std.txt.latest"}
+	table, _ := ip.NewIPTable(fpaths...)
+	ips, _ := loadIP(fpaths...)
 
-	fpath6 := "./ip/test_data/mgiplib-v6-std.txt.latest"
-	v6s, _ := ip.NewTable(fpath6)
-	ip6s, _ := LoadIP(fpath6)
-
-	go func() {
-		for {
-			for _, v := range ip4s {
-				v4s.Search(v)
-			}
+	for {
+		for _, ipstr := range ips {
+			table.Search(ipstr)
 		}
-	}()
-
-	go func() {
-		for {
-			for _, v := range ip6s {
-				v6s.Search(v)
-			}
-		}
-	}()
-	select {}
+	}
 }
 
-func LoadIP(fpath string) ([]string, error) {
-	f, err := os.Open(fpath)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
+func loadIP(fpaths ...string) ([]string, error) {
 	lines := make([]string, 0)
-	for scanner := bufio.NewScanner(f); scanner.Scan(); {
-		line := scanner.Text()
-		if line[0] == '#' || len(line) == 0 || !strings.Contains(line, "|") {
-			continue
+
+	for _, fpath := range fpaths {
+		f, err := os.Open(fpath)
+		if err != nil {
+			return nil, err
 		}
-		lines = append(lines, strings.Split(line, "|")[0])
+		defer f.Close()
+
+		for scanner := bufio.NewScanner(f); scanner.Scan(); {
+			line := scanner.Text()
+			if line[0] == '#' || len(line) == 0 || !strings.Contains(line, "|") {
+				continue
+			}
+			lines = append(lines, strings.Split(line, "|")[0])
+		}
 	}
+
 	return lines, nil
 }

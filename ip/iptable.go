@@ -1,27 +1,13 @@
 package ip
 
 import (
+	"bufio"
 	"gommon/extends"
 	"net"
+	"os"
 	"sort"
 	"strings"
 )
-
-func ipv6(ipStr string) net.IP {
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		return nil
-	}
-	return ip.To16()
-}
-
-func ipv4(ipStr string) net.IP {
-	ip := net.ParseIP(ipStr)
-	if ip == nil {
-		return nil
-	}
-	return ip.To4()
-}
 
 func isV4(ipStr string) bool {
 	return strings.Contains(ipStr, ".")
@@ -56,21 +42,29 @@ func (t *IPTable) StringOf(ipRange *IPRange) string {
 }
 
 func (t *IPTable) Search(ipStr string) *IPRange {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return nil
+	}
 	if strings.Contains(ipStr, ".") {
-		ip := ipv4(ipStr)
 		return t.SearchV4(ip)
 	} else {
-		ip := ipv6(ipStr)
 		return t.SearchV6(ip)
 	}
 }
 
-func (t *IPTable) SearchV4(ip net.IP) *IPRange {
-	return t.search(ip, t.v4s)
+func (t *IPTable) SearchV4(ipv4 net.IP) *IPRange {
+	if ipv4 = ipv4.To4(); ipv4 == nil {
+		return nil
+	}
+	return t.search(ipv4, t.v4s)
 }
 
-func (t *IPTable) SearchV6(ip net.IP) *IPRange {
-	return t.search(ip, t.v6s)
+func (t *IPTable) SearchV6(ipv6 net.IP) *IPRange {
+	if ipv6 = ipv6.To16(); ipv6 == nil {
+		return nil
+	}
+	return t.search(ipv6, t.v6s)
 }
 
 func (t *IPTable) search(ip net.IP, ranges IPRanges) *IPRange {
@@ -87,12 +81,32 @@ func (t *IPTable) search(ip net.IP, ranges IPRanges) *IPRange {
 	return nil
 }
 
-func NewTable(fpath string) (*IPTable, error) {
-	lines, err := LoadFile(fpath)
-	if err != nil {
-		return nil, err
-	}
+func (t *IPTable) sortAndUniq() {
+	sort.Sort(&t.v4s)
+	sort.Sort(&t.v6s)
 
+	uniqV4s, uniqV6s := make(IPRanges, 0), make(IPRanges, 0)
+	if len(t.v4s) > 0 {
+		uniqV4s = append(uniqV4s, t.v4s[0])
+		for i := 1; i < len(t.v4s); i++ {
+			if t.v4s[i].Cmp(t.v4s[i-1]) != 0 {
+				uniqV4s = append(uniqV4s, t.v4s[i])
+			}
+		}
+	}
+	if len(t.v6s) > 0 {
+		uniqV6s = append(uniqV6s, t.v6s[0])
+		for i := 1; i < len(t.v6s); i++ {
+			if t.v6s[i].Cmp(t.v6s[i-1]) != 0 {
+				uniqV6s = append(uniqV6s, t.v6s[i])
+			}
+		}
+	}
+	t.v4s, t.v6s = uniqV4s, uniqV6s
+}
+
+func NewIPTable(fpaths ...string) (*IPTable, error) {
+	var err error
 	table := &IPTable{
 		v4s:       make(IPRanges, 0),
 		v6s:       make(IPRanges, 0),
@@ -103,20 +117,42 @@ func NewTable(fpath string) (*IPTable, error) {
 		numbers:   extends.NewArray(),
 	}
 
-	for _, line := range lines {
+	for _, fpath := range fpaths {
+		if table, err = initFromFile(fpath, table); err != nil {
+			return nil, err
+		}
+	}
+
+	return table, nil
+}
+
+func initFromFile(fpath string, table *IPTable) (*IPTable, error) {
+	f, err := os.Open(fpath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	for scanner := bufio.NewScanner(f); scanner.Scan(); {
+		line := scanner.Text()
 		if line[0] == '#' {
 			continue
 		}
-		vs := strings.Split(line, "|")
-		if len(vs) != 7 {
+		parts := strings.Split(line, "|")
+		if len(parts) != 7 {
 			continue
 		}
-		var low, high net.IP
-		isV4 := isV4(vs[0])
+
+		low, high := net.ParseIP(parts[0]), net.ParseIP(parts[1])
+		if low == nil && high == nil {
+			continue
+		}
+
+		isV4 := isV4(parts[0])
 		if isV4 {
-			low, high = ipv4(vs[0]), ipv4(vs[1])
+			low, high = low.To4(), high.To4()
 		} else {
-			low, high = ipv6(vs[0]), ipv6(vs[1])
+			low, high = low.To16(), high.To16()
 		}
 		if low == nil || high == nil {
 			continue
@@ -128,29 +164,28 @@ func NewTable(fpath string) (*IPTable, error) {
 			table.AddV4(&IPRange{
 				low:        low,
 				high:       high,
-				StartStr:   vs[0],
-				EndStr:     vs[1],
-				CountryIdx: table.countries.Append(vs[2]),
-				IspIdx:     table.isps.Append(vs[3]),
-				ProvIdx:    table.provs.Append(vs[4]),
-				CityIdx:    table.cities.Append(vs[5]),
-				NumberIdx:  table.numbers.Append(vs[6]),
+				StartStr:   parts[0],
+				EndStr:     parts[1],
+				CountryIdx: table.countries.Append(parts[2]),
+				IspIdx:     table.isps.Append(parts[3]),
+				ProvIdx:    table.provs.Append(parts[4]),
+				CityIdx:    table.cities.Append(parts[5]),
+				NumberIdx:  table.numbers.Append(parts[6]),
 			})
 		} else {
 			table.AddV6(&IPRange{
 				low:        low,
 				high:       high,
-				StartStr:   vs[0],
-				EndStr:     vs[1],
-				CountryIdx: table.countries.Append(vs[2]),
-				IspIdx:     table.isps.Append(vs[3]),
-				ProvIdx:    table.provs.Append(vs[4]),
-				CityIdx:    table.cities.Append(vs[5]),
-				NumberIdx:  table.numbers.Append(vs[6]),
+				StartStr:   parts[0],
+				EndStr:     parts[1],
+				CountryIdx: table.countries.Append(parts[2]),
+				IspIdx:     table.isps.Append(parts[3]),
+				ProvIdx:    table.provs.Append(parts[4]),
+				CityIdx:    table.cities.Append(parts[5]),
+				NumberIdx:  table.numbers.Append(parts[6]),
 			})
 		}
 	}
-	sort.Sort(&table.v4s)
-	sort.Sort(&table.v6s)
+	table.sortAndUniq()
 	return table, nil
 }
