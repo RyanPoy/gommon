@@ -2,35 +2,47 @@ package ip
 
 import (
 	"gommon/extends"
+	"net"
 	"sort"
+	"strings"
 )
 
-type IPRanges []*IPRange
+func ipv6(ipStr string) net.IP {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return nil
+	}
+	return ip.To16()
+}
 
-func (t IPRanges) Len() int {
-	return len(t)
+func ipv4(ipStr string) net.IP {
+	ip := net.ParseIP(ipStr)
+	if ip == nil {
+		return nil
+	}
+	return ip.To4()
 }
-func (t IPRanges) Swap(i, j int) {
-	t[i], t[j] = t[j], t[i]
-}
-func (t *IPRanges) Less(i, j int) bool {
-	rs := *t
-	return rs[i].Cmp(rs[j]) < 0
+
+func isV4(ipStr string) bool {
+	return strings.Contains(ipStr, ".")
 }
 
 type IPTable struct {
-	data      IPRanges
+	v4s       IPRanges
+	v6s       IPRanges
 	countries *extends.Array
 	isps      *extends.Array
 	provs     *extends.Array
 	cities    *extends.Array
 	numbers   *extends.Array
-
-	searchFunc func(ipStr string, ranges IPRanges) *IPRange
 }
 
-func (t *IPTable) Add(x *IPRange) {
-	t.data = append(t.data, x)
+func (t *IPTable) AddV4(x *IPRange) {
+	t.v4s = append(t.v4s, x)
+}
+
+func (t *IPTable) AddV6(x *IPRange) {
+	t.v6s = append(t.v6s, x)
 }
 
 func (t *IPTable) StringOf(ipRange *IPRange) string {
@@ -44,47 +56,101 @@ func (t *IPTable) StringOf(ipRange *IPRange) string {
 }
 
 func (t *IPTable) Search(ipStr string) *IPRange {
-	return t.searchFunc(ipStr, t.data)
-}
-
-func NewV4Table(fpath string) (*IPTable, error) {
-	table := &IPTable{
-		data:       make(IPRanges, 0),
-		countries:  extends.NewArray(),
-		isps:       extends.NewArray(),
-		provs:      extends.NewArray(),
-		cities:     extends.NewArray(),
-		numbers:    extends.NewArray(),
-		searchFunc: SearchV4,
+	if strings.Contains(ipStr, ".") {
+		ip := ipv4(ipStr)
+		return t.SearchV4(ip)
+	} else {
+		ip := ipv6(ipStr)
+		return t.SearchV6(ip)
 	}
-	return newTable(fpath, table, ParseV4Range)
 }
 
-func NewV6Table(fpath string) (*IPTable, error) {
-	table := &IPTable{
-		data:       make(IPRanges, 0),
-		countries:  extends.NewArray(),
-		isps:       extends.NewArray(),
-		provs:      extends.NewArray(),
-		cities:     extends.NewArray(),
-		numbers:    extends.NewArray(),
-		searchFunc: SearchV6,
+func (t *IPTable) SearchV4(ip net.IP) *IPRange {
+	return t.search(ip, t.v4s)
+}
+
+func (t *IPTable) SearchV6(ip net.IP) *IPRange {
+	return t.search(ip, t.v6s)
+}
+
+func (t *IPTable) search(ip net.IP, ranges IPRanges) *IPRange {
+	if ip == nil {
+		return nil
 	}
-	return newTable(fpath, table, ParseV6Range)
+	idx := sort.Search(len(ranges), func(i int) bool {
+		return cmp(ranges[i].low, ip) == 1 || cmp(ranges[i].high, ip) != -1
+	})
+
+	if idx < len(ranges) && ranges[idx].Contains(ip) {
+		return ranges[idx]
+	}
+	return nil
 }
 
-func newTable(fpath string, table *IPTable, parseRange func(string, *IPTable) *IPRange) (*IPTable, error) {
+func NewTable(fpath string) (*IPTable, error) {
 	lines, err := LoadFile(fpath)
 	if err != nil {
 		return nil, err
 	}
+
+	table := &IPTable{
+		v4s:       make(IPRanges, 0),
+		v6s:       make(IPRanges, 0),
+		countries: extends.NewArray(),
+		isps:      extends.NewArray(),
+		provs:     extends.NewArray(),
+		cities:    extends.NewArray(),
+		numbers:   extends.NewArray(),
+	}
+
 	for _, line := range lines {
-		v4Range := parseRange(line, table)
-		if v4Range == nil {
+		if line[0] == '#' {
 			continue
 		}
-		table.Add(v4Range) // 添加到集合
+		vs := strings.Split(line, "|")
+		if len(vs) != 7 {
+			continue
+		}
+		var low, high net.IP
+		isV4 := isV4(vs[0])
+		if isV4 {
+			low, high = ipv4(vs[0]), ipv4(vs[1])
+		} else {
+			low, high = ipv6(vs[0]), ipv6(vs[1])
+		}
+		if low == nil || high == nil {
+			continue
+		}
+		if cmp(low, high) == 1 {
+			low, high = high, low
+		}
+		if isV4 {
+			table.AddV4(&IPRange{
+				low:        low,
+				high:       high,
+				StartStr:   vs[0],
+				EndStr:     vs[1],
+				CountryIdx: table.countries.Append(vs[2]),
+				IspIdx:     table.isps.Append(vs[3]),
+				ProvIdx:    table.provs.Append(vs[4]),
+				CityIdx:    table.cities.Append(vs[5]),
+				NumberIdx:  table.numbers.Append(vs[6]),
+			})
+		} else {
+			table.AddV6(&IPRange{
+				low:        low,
+				high:       high,
+				StartStr:   vs[0],
+				EndStr:     vs[1],
+				CountryIdx: table.countries.Append(vs[2]),
+				IspIdx:     table.isps.Append(vs[3]),
+				ProvIdx:    table.provs.Append(vs[4]),
+				CityIdx:    table.cities.Append(vs[5]),
+				NumberIdx:  table.numbers.Append(vs[6]),
+			})
+		}
 	}
-	sort.Sort(&table.data)
+	sort.Sort(&table.v4s)
+	sort.Sort(&table.v6s)
 	return table, nil
 }

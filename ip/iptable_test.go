@@ -7,9 +7,9 @@ import (
 )
 
 func TestV4TableSimpleSearch(t *testing.T) {
-	table, err := ip.NewV4Table("./test_data/a.v4.txt")
+	table, err := ip.NewTable("./test_data/a.v4.txt")
 	if err != nil {
-		t.Errorf("Can not load ipRange data file, %v", err)
+		t.Errorf("Can not load ipRange v4s file, %v", err)
 		return
 	}
 
@@ -27,9 +27,9 @@ func TestV4TableSimpleSearch(t *testing.T) {
 }
 
 func TestV4TableSearch(t *testing.T) {
-	table, err := ip.NewV4Table("./test_data/mgiplib-std.txt.latest")
+	table, err := ip.NewTable("./test_data/mgiplib-std.txt.latest")
 	if err != nil {
-		t.Errorf("Can not load ipRange data file, %v", err)
+		t.Errorf("Can not load ipRange v4s file, %v", err)
 		return
 	}
 
@@ -53,14 +53,14 @@ func TestV4TableSearch(t *testing.T) {
 
 func TestV4TableComplexSearch(t *testing.T) {
 	fpath := "./test_data/mgiplib-std.txt.latest"
-	table, err := ip.NewV4Table(fpath)
+	table, err := ip.NewTable(fpath)
 	if err != nil {
-		t.Errorf("Can not load ipRange data file, %v", err)
+		t.Errorf("Can not load ipRange v4s file, %v", err)
 		return
 	}
 	searchIps, err := getAllIp(fpath)
 	if err != nil {
-		t.Errorf("Can not read ipv6 data, %v", err)
+		t.Errorf("Can not read ipv6 v4s, %v", err)
 		return
 	}
 
@@ -78,9 +78,9 @@ func TestV4TableComplexSearch(t *testing.T) {
 }
 
 func TestV6TableSearch(t *testing.T) {
-	table, err := ip.NewV6Table("./test_data/mgiplib-v6-std.txt.latest")
+	table, err := ip.NewTable("./test_data/mgiplib-v6-std.txt.latest")
 	if err != nil {
-		t.Errorf("Can not load v6 data file, %v", err)
+		t.Errorf("Can not load v6 v4s file, %v", err)
 		return
 	}
 
@@ -99,14 +99,14 @@ func TestV6TableSearch(t *testing.T) {
 
 func TestV6TableComplexSearch(t *testing.T) {
 	fpath := "./test_data/mgiplib-v6-std.txt.latest"
-	table, err := ip.NewV6Table(fpath)
+	table, err := ip.NewTable(fpath)
 	if err != nil {
-		t.Errorf("Can not load v6 data file, %v", err)
+		t.Errorf("Can not load v6 v4s file, %v", err)
 		return
 	}
 	searchIps, err := getAllIp(fpath)
 	if err != nil {
-		t.Errorf("Can not read ipv6 data, %v", err)
+		t.Errorf("Can not read ipv6 v4s, %v", err)
 		return
 	}
 
