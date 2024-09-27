@@ -5,35 +5,32 @@ import (
 	"sort"
 )
 
-type IPRanges struct {
-	data []*IPRange
-}
+type IPRanges []*IPRange
 
-func (t *IPRanges) Len() int {
-	return len(t.data)
+func (t IPRanges) Len() int {
+	return len(t)
 }
-
-func (t *IPRanges) Swap(i, j int) {
-	t.data[i], t.data[j] = t.data[j], t.data[i]
+func (t IPRanges) Swap(i, j int) {
+	t[i], t[j] = t[j], t[i]
 }
-
 func (t *IPRanges) Less(i, j int) bool {
-	return t.data[i].Cmp(t.data[j]) < 0
+	rs := *t
+	return rs[i].Cmp(rs[j]) < 0
 }
 
 type IPTable struct {
-	data      *IPRanges
+	data      IPRanges
 	countries *extends.Array
 	isps      *extends.Array
 	provs     *extends.Array
 	cities    *extends.Array
 	numbers   *extends.Array
 
-	searchFunc func(ipStr string, ranges *IPRanges) *IPRange
+	searchFunc func(ipStr string, ranges IPRanges) *IPRange
 }
 
 func (t *IPTable) Add(x *IPRange) {
-	t.data.data = append(t.data.data, x)
+	t.data = append(t.data, x)
 }
 
 func (t *IPTable) StringOf(ipRange *IPRange) string {
@@ -52,7 +49,7 @@ func (t *IPTable) Search(ipStr string) *IPRange {
 
 func NewV4Table(fpath string) (*IPTable, error) {
 	table := &IPTable{
-		data:       &IPRanges{data: make([]*IPRange, 0)},
+		data:       make(IPRanges, 0),
 		countries:  extends.NewArray(),
 		isps:       extends.NewArray(),
 		provs:      extends.NewArray(),
@@ -65,7 +62,7 @@ func NewV4Table(fpath string) (*IPTable, error) {
 
 func NewV6Table(fpath string) (*IPTable, error) {
 	table := &IPTable{
-		data:       &IPRanges{data: make([]*IPRange, 0)},
+		data:       make(IPRanges, 0),
 		countries:  extends.NewArray(),
 		isps:       extends.NewArray(),
 		provs:      extends.NewArray(),
@@ -88,6 +85,6 @@ func newTable(fpath string, table *IPTable, parseRange func(string, *IPTable) *I
 		}
 		table.Add(v4Range) // 添加到集合
 	}
-	sort.Sort(table.data)
+	sort.Sort(&table.data)
 	return table, nil
 }
