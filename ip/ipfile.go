@@ -3,7 +3,7 @@ package ip
 import (
 	"bufio"
 	"gommon/convert"
-	"gommon/extends"
+	"net"
 	"os"
 	"strings"
 )
@@ -37,61 +37,24 @@ func parseRange(line string, table *IPTable, isV4 bool) IPRange {
 	if len(vs) != 7 {
 		return nil
 	}
-	low, high := parseLowAndHigh(vs[0], vs[1], isV4)
+	var low, high net.IP
+	if isV4 {
+		low, high = convert.IPStr2IPv4(vs[0]), convert.IPStr2IPv4(vs[1])
+	} else {
+		low, high = convert.IPStr2IPv6(vs[0]), convert.IPStr2IPv6(vs[1])
+	}
 	if low == nil || high == nil {
 		return nil
 	}
-
+	if cmp(low, high) == 1 {
+		low, high = high, low
+	}
 	if isV4 {
-		return &V4Range{
-			low:  *low.(*uint32),
-			high: *high.(*uint32),
-			originData: &OriginData{
-				StartStr:   vs[0],
-				EndStr:     vs[1],
-				CountryIdx: table.countries.Append(vs[2]),
-				IspIdx:     table.isps.Append(vs[3]),
-				ProvIdx:    table.provs.Append(vs[4]),
-				CityIdx:    table.cities.Append(vs[5]),
-				NumberIdx:  table.numbers.Append(vs[6]),
-			},
-		}
+		return NewV4Range(low, high, vs[0], vs[1], table.countries.Append(vs[2]), table.isps.Append(vs[3]),
+			table.provs.Append(vs[4]), table.cities.Append(vs[5]), table.numbers.Append(vs[6]),
+		)
 	}
-	return &V6Range{
-		low:  low.(*extends.Int128),
-		high: high.(*extends.Int128),
-		originData: &OriginData{
-			StartStr:   vs[0],
-			EndStr:     vs[1],
-			CountryIdx: table.countries.Append(vs[2]),
-			IspIdx:     table.isps.Append(vs[3]),
-			ProvIdx:    table.provs.Append(vs[4]),
-			CityIdx:    table.cities.Append(vs[5]),
-			NumberIdx:  table.numbers.Append(vs[6]),
-		},
-	}
-}
-
-func parseLowAndHigh(lowStr, highStr string, isV4 bool) (interface{}, interface{}) {
-	if isV4 {
-		low := convert.IPStr2Uint32(lowStr)
-		high := convert.IPStr2Uint32(highStr)
-		if low == nil || high == nil {
-			return nil, nil
-		}
-		if *low > *high {
-			*low, *high = *high, *low
-		}
-		return low, high
-	} else {
-		low := convert.IPStr2Int128(lowStr)
-		high := convert.IPStr2Int128(highStr)
-		if low == nil || high == nil {
-			return nil, nil
-		}
-		if low.Cmp(high) == 1 {
-			low, high = high, low
-		}
-		return low, high
-	}
+	return NewV6Range(low, high, vs[0], vs[1], table.countries.Append(vs[2]), table.isps.Append(vs[3]),
+		table.provs.Append(vs[4]), table.cities.Append(vs[5]), table.numbers.Append(vs[6]),
+	)
 }

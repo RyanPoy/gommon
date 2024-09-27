@@ -1,10 +1,14 @@
 package ip
 
 import (
+	"bytes"
 	"encoding/binary"
-	"gommon/extends"
 	"net"
 )
+
+//type UInt128 []byte
+
+var cmp = bytes.Compare
 
 type OriginData struct {
 	StartStr   string
@@ -66,8 +70,8 @@ func (r *V4Range) Contains(ip net.IP) bool {
 
 type V6Range struct {
 	originData *OriginData
-	low        *extends.Int128
-	high       *extends.Int128
+	low        []byte
+	high       []byte
 }
 
 func (r *V6Range) OriginData() *OriginData {
@@ -77,30 +81,59 @@ func (r *V6Range) OriginData() *OriginData {
 func (r *V6Range) Cmp(other IPRange) int {
 	o := other.(*V6Range)
 
-	cmpHigh := r.high.Cmp(o.high)
+	cmpHigh := cmp(r.high, o.high)
 	if cmpHigh == 0 {
-		return r.low.Cmp(o.low)
+		return cmp(r.low, o.low)
 	}
 	return cmpHigh
 }
 
 func (r *V6Range) GTE(ip net.IP) bool {
-	ipv := &extends.Int128{
-		H: binary.BigEndian.Uint64(ip[0:8]),
-		L: binary.BigEndian.Uint64(ip[8:16]),
-	}
-	if r.low.Cmp(ipv) == 1 {
+	if cmp(r.low, ip) == 1 {
 		return true
 	}
-	return r.high.Cmp(ipv) != -1
+	return cmp(r.high, ip) != -1
 }
 
 func (r *V6Range) Contains(ip net.IP) bool {
-	ipv := &extends.Int128{
-		H: binary.BigEndian.Uint64(ip[0:8]),
-		L: binary.BigEndian.Uint64(ip[8:16]),
-	}
 	// 检查找到的index是否在原始区间内
 	// 即：ipv <= r.low && ipv >= r.high
-	return ipv.Cmp(r.low) != -1 && ipv.Cmp(r.high) != 1
+	return cmp(ip, r.low) != -1 && cmp(ip, r.high) != 1
+}
+
+func NewV4Range(
+	low, high net.IP,
+	startStr, endStr string,
+	countryIdx, ispIdx, provIdx, cityIdx, numberIdx int) *V4Range {
+	return &V4Range{
+		low:  binary.BigEndian.Uint32(low),
+		high: binary.BigEndian.Uint32(high),
+		originData: &OriginData{
+			StartStr:   startStr,
+			EndStr:     endStr,
+			CountryIdx: countryIdx,
+			IspIdx:     ispIdx,
+			ProvIdx:    provIdx,
+			CityIdx:    cityIdx,
+			NumberIdx:  numberIdx,
+		},
+	}
+}
+
+func NewV6Range(low, high net.IP,
+	startStr, endStr string,
+	countryIdx, ispIdx, provIdx, cityIdx, numberIdx int) *V6Range {
+	return &V6Range{
+		low:  low,
+		high: high,
+		originData: &OriginData{
+			StartStr:   startStr,
+			EndStr:     endStr,
+			CountryIdx: countryIdx,
+			IspIdx:     ispIdx,
+			ProvIdx:    provIdx,
+			CityIdx:    cityIdx,
+			NumberIdx:  numberIdx,
+		},
+	}
 }

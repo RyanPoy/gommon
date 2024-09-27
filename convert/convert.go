@@ -2,20 +2,10 @@ package convert
 
 import (
 	"encoding/binary"
-	"gommon/extends"
 	"net"
 )
 
-func IPStr2Int128(ipStr string) *extends.Int128 {
-	v := IPStr2IPv6(ipStr)
-	if v == nil {
-		return nil
-	}
-	return &extends.Int128{
-		H: binary.BigEndian.Uint64(v[0:8]),
-		L: binary.BigEndian.Uint64(v[8:16]),
-	}
-}
+var IPStr2Int128 = IPStr2IPv6
 
 func IPStr2Uint32(ipStr string) *uint32 {
 	v := IPStr2IPv4(ipStr)
