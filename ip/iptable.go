@@ -3,6 +3,7 @@ package ip
 import (
 	"bufio"
 	"gommon/extends/array"
+	"gommon/ip/consts"
 	"net"
 	"os"
 	"sort"
@@ -39,6 +40,18 @@ func (t *IPTable) StringOf(ipRange *IPRange) string {
 		t.provs.Get(ipRange.ProvIdx) + "|" +
 		t.cities.Get(ipRange.CityIdx) + "|" +
 		t.numbers.Get(ipRange.NumberIdx)
+}
+func (t *IPTable) MapOf(ipRange *IPRange) map[string]string {
+	countryCode := t.countries.Get(ipRange.CountryIdx)
+	country := consts.CountryOf(countryCode)
+	return map[string]string{
+		"country":   country.Name,
+		"timezone":  country.Timezone,
+		"continent": country.ContinentCode,
+		"province":  t.provs.Get(ipRange.ProvIdx),
+		"city":      t.cities.Get(ipRange.CityIdx),
+		"isp":       t.isps.Get(ipRange.IspIdx),
+	}
 }
 
 func (t *IPTable) Search(ipStr string) *IPRange {

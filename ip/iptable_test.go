@@ -4,126 +4,88 @@ import (
 	"bufio"
 	"gommon/ip"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 )
 
-func TestV4TableSimpleSearch(t *testing.T) {
-	table, err := ip.NewIPTable("./test_data/a.v4.txt")
-	if err != nil {
-		t.Errorf("Can not load ipRange v4s file, %v", err)
-		return
-	}
-
-	ipRange := table.Search("0.0.0.0")
-	if ipRange == nil {
-		t.Errorf("Can not find [%s]", "0.0.0.0")
-		return
-	}
-
-	expected := "0.0.0.0|0.255.255.255|HW|OTHER|海外|未知|1"
-	if table.StringOf(ipRange) != expected {
-		t.Errorf("Expected[%s], but[%s]", expected, table.StringOf(ipRange))
-		return
-	}
+var fpaths = []string{
+	"./test_data/a.v4.txt",
+	"./test_data/mgiplib-std.txt.latest",
+	"./test_data/mgiplib-v6-std.txt.latest",
 }
 
-func TestV4TableSearch(t *testing.T) {
-	table, err := ip.NewIPTable("./test_data/mgiplib-std.txt.latest")
-	if err != nil {
-		t.Errorf("Can not load ipRange v4s file, %v", err)
-		return
+func TestInitTable(t *testing.T) {
+	if _, err := ip.NewIPTable(fpaths...); err != nil {
+		t.Errorf("Can not load file, %v", err)
 	}
 
-	ipRange := table.Search("223.242.47.30")
-	if ipRange == nil {
-		t.Errorf("Can not find [%s]", "223.242.32.30")
-		return
-	}
-
-	expected := "223.242.32.0|223.242.47.255|CN|CT|安徽|芜湖|576074"
-	if table.StringOf(ipRange) != expected {
-		t.Errorf("Expected[%s], but[%s]", expected, table.StringOf(ipRange))
-		return
-	}
-
-	if ipRange := table.Search("223.242.64.289"); ipRange != nil {
-		t.Errorf("Expected not found, but got [%s]", table.StringOf(ipRange))
-		return
+	if _, err := loadIP(fpaths...); err != nil {
+		t.Errorf("Can not read ips, %v", err)
 	}
 }
-
-func TestV4TableComplexSearch(t *testing.T) {
-	fpath := "./test_data/mgiplib-std.txt.latest"
-	table, err := ip.NewIPTable(fpath)
-	if err != nil {
-		t.Errorf("Can not load ipRange v4s file, %v", err)
-		return
-	}
-	searchIps, err := loadIP(fpath)
-	if err != nil {
-		t.Errorf("Can not read ipv6 v4s, %v", err)
-		return
-	}
-
-	for _, ip := range searchIps {
-		ipRange := table.Search(ip)
+func TestSearch(t *testing.T) {
+	table, _ := ip.NewIPTable(fpaths...)
+	for _, caze := range [][]interface{}{
+		{
+			"0.0.0.0",
+			"0.0.0.0|0.255.255.255|HW|OTHER|海外|未知|1",
+			map[string]string{"city": "未知", "continent": "", "country": "HW", "isp": "OTHER", "province": "海外", "timezone": ""},
+		},
+		{
+			"223.242.47.30",
+			"223.242.32.0|223.242.47.255|CN|CT|安徽|芜湖|576074",
+			map[string]string{"city": "芜湖", "continent": "AS", "country": "中国", "isp": "CT", "province": "安徽", "timezone": "Asia/Shanghai"},
+		},
+		{
+			"240e:6af:4700:1111::",
+			"240e:6af:4700::|240e:6af:47ff:ffff:ffff:ffff:ffff:ffff|CN|CT|江苏|淮安|95566",
+			map[string]string{"city": "淮安", "continent": "AS", "country": "中国", "isp": "CT", "province": "江苏", "timezone": "Asia/Shanghai"},
+		},
+	} {
+		ipStr, expected, expectedMap := caze[0].(string), caze[1].(string), caze[2].(map[string]string)
+		ipRange := table.Search(ipStr)
 		if ipRange == nil {
-			t.Errorf("Can not find [%s]", ip)
+			t.Errorf("Expected to get [%s], but not found by [%s]", expected, ipStr)
 			return
 		}
-		if ipRange.StartStr != ip {
-			t.Errorf("Expected[%s], but[%s]", ip, ipRange.StartStr)
+		if table.StringOf(ipRange) != expected {
+			t.Errorf("Expected to get [%s], but got [%s]", expected, table.StringOf(ipRange))
+			return
+		}
+		if !reflect.DeepEqual(table.MapOf(ipRange), expectedMap) {
+			t.Errorf("Expected to get [%v], but got [%v]", expectedMap, table.MapOf(ipRange))
 			return
 		}
 	}
 }
 
-func TestV6TableSearch(t *testing.T) {
-	table, err := ip.NewIPTable("./test_data/mgiplib-v6-std.txt.latest")
-	if err != nil {
-		t.Errorf("Can not load v6 v4s file, %v", err)
-		return
-	}
-
-	ipRange := table.Search("240e:6af:4700:1111::")
-	if ipRange == nil {
-		t.Errorf("Can not find [%s]", "240e:6af:4700:1111::")
-		return
-	}
-
-	expected := "240e:6af:4700::|240e:6af:47ff:ffff:ffff:ffff:ffff:ffff|CN|CT|江苏|淮安|95566"
-	if table.StringOf(ipRange) != expected {
-		t.Errorf("Expected[%s], but[%s]", expected, table.StringOf(ipRange))
-		return
+func TestSearchMissing(t *testing.T) {
+	table, _ := ip.NewIPTable(fpaths...)
+	for _, missing := range []string{"223.242.64.289"} {
+		if ipRange := table.Search(missing); ipRange != nil {
+			t.Errorf("Expected not to find, but got [%s]", table.StringOf(ipRange))
+			return
+		}
 	}
 }
 
-func TestV6TableComplexSearch(t *testing.T) {
-	fpath := "./test_data/mgiplib-v6-std.txt.latest"
-	table, err := ip.NewIPTable(fpath)
-	if err != nil {
-		t.Errorf("Can not load v6 v4s file, %v", err)
-		return
-	}
-	searchIps, err := loadIP(fpath)
-	if err != nil {
-		t.Errorf("Can not read ipv6 v4s, %v", err)
-		return
-	}
-
-	for _, ip := range searchIps {
-		ipRange := table.Search(ip)
+func TestSearchAll(t *testing.T) {
+	table, _ := ip.NewIPTable(fpaths...)
+	searchIps, _ := loadIP(fpaths...)
+	for _, ipStr := range searchIps {
+		ipRange := table.Search(ipStr)
 		if ipRange == nil {
-			t.Errorf("Can not find [%s]", "240e:6af:4700:1111::")
+			t.Errorf("Expected to find [%s], but not found", ipStr)
 			return
 		}
-		if ipRange.StartStr != ip {
-			t.Errorf("Expected[%s], but[%s]", ip, ipRange.StartStr)
+		if ipRange.StartStr != ipStr {
+			t.Errorf("Expected to find [%s], but got [%s]", ipStr, ipRange.StartStr)
 			return
 		}
 	}
 }
+
 func loadIP(fpaths ...string) ([]string, error) {
 	lines := make([]string, 0)
 
@@ -132,7 +94,8 @@ func loadIP(fpaths ...string) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer f.Close()
+
+		func(file *os.File) { defer file.Close() }(f)
 
 		for scanner := bufio.NewScanner(f); scanner.Scan(); {
 			line := scanner.Text()
