@@ -37,14 +37,14 @@ func (r *IPRange) Contains(ip net.IP) bool {
 // /
 type IPRanges []*IPRange
 
-func (t *IPRanges) Len() int {
-	return len(*t)
+func (rs *IPRanges) Len() int {
+	return len(*rs)
 }
-func (t *IPRanges) Swap(i, j int) {
-	rs := *t
-	rs[i], rs[j] = rs[j], rs[i]
+func (rs *IPRanges) Swap(i, j int) {
+	obj := *rs
+	obj[i], obj[j] = obj[j], obj[i]
 }
-func (t *IPRanges) Less(i, j int) bool {
-	rs := *t
-	return rs[i].Cmp(rs[j]) < 0
+func (rs *IPRanges) Less(i, j int) bool {
+	obj := *rs
+	return obj[i].Cmp(obj[j]) < 0
 }
