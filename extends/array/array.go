@@ -1,6 +1,6 @@
-package extends
+package array
 
-func NewArray() *Array {
+func New() *Array {
 	return &Array{
 		items:   make([]string, 0),
 		hashmap: make(map[string]int),

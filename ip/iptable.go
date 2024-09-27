@@ -2,7 +2,7 @@ package ip
 
 import (
 	"bufio"
-	"gommon/extends"
+	"gommon/extends/array"
 	"net"
 	"os"
 	"sort"
@@ -16,11 +16,11 @@ func isV4(ipStr string) bool {
 type IPTable struct {
 	v4s       IPRanges
 	v6s       IPRanges
-	countries *extends.Array
-	isps      *extends.Array
-	provs     *extends.Array
-	cities    *extends.Array
-	numbers   *extends.Array
+	countries *array.Array
+	isps      *array.Array
+	provs     *array.Array
+	cities    *array.Array
+	numbers   *array.Array
 }
 
 func (t *IPTable) AddV4(x *IPRange) {
@@ -110,11 +110,11 @@ func NewIPTable(fpaths ...string) (*IPTable, error) {
 	table := &IPTable{
 		v4s:       make(IPRanges, 0),
 		v6s:       make(IPRanges, 0),
-		countries: extends.NewArray(),
-		isps:      extends.NewArray(),
-		provs:     extends.NewArray(),
-		cities:    extends.NewArray(),
-		numbers:   extends.NewArray(),
+		countries: array.New(),
+		isps:      array.New(),
+		provs:     array.New(),
+		cities:    array.New(),
+		numbers:   array.New(),
 	}
 
 	for _, fpath := range fpaths {
