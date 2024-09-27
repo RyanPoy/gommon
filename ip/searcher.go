@@ -6,26 +6,26 @@ import (
 	"sort"
 )
 
-func SearchV4(ipStr string, table *IPTable) *IPRange {
+func SearchV4(ipStr string, ranges *IPRanges) *IPRange {
 	ip := convert.IPStr2IPv4(ipStr)
-	return search(ip, table)
+	return search(ip, ranges)
 }
 
-func SearchV6(ipStr string, table *IPTable) *IPRange {
+func SearchV6(ipStr string, ranges *IPRanges) *IPRange {
 	ip := convert.IPStr2IPv6(ipStr)
-	return search(ip, table)
+	return search(ip, ranges)
 }
 
-func search(ip net.IP, table *IPTable) *IPRange {
+func search(ip net.IP, ranges *IPRanges) *IPRange {
 	if ip == nil {
 		return nil
 	}
-	idx := sort.Search(len(table.data), func(i int) bool {
-		return cmp(table.data[i].low, ip) == 1 || cmp(table.data[i].high, ip) != -1
+	idx := sort.Search(len(ranges.data), func(i int) bool {
+		return cmp(ranges.data[i].low, ip) == 1 || cmp(ranges.data[i].high, ip) != -1
 	})
 
-	if idx < len(table.data) && table.data[idx].Contains(ip) {
-		return table.data[idx]
+	if idx < len(ranges.data) && ranges.data[idx].Contains(ip) {
+		return ranges.data[idx]
 	}
 	return nil
 }

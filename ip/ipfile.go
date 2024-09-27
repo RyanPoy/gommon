@@ -49,7 +49,15 @@ func parseRange(line string, table *IPTable, isV4 bool) *IPRange {
 	if cmp(low, high) == 1 {
 		low, high = high, low
 	}
-	return NewIPRange(low, high, vs[0], vs[1], table.countries.Append(vs[2]), table.isps.Append(vs[3]),
-		table.provs.Append(vs[4]), table.cities.Append(vs[5]), table.numbers.Append(vs[6]),
-	)
+	return &IPRange{
+		low:        low,
+		high:       high,
+		StartStr:   vs[0],
+		EndStr:     vs[1],
+		CountryIdx: table.countries.Append(vs[2]),
+		IspIdx:     table.isps.Append(vs[3]),
+		ProvIdx:    table.provs.Append(vs[4]),
+		CityIdx:    table.cities.Append(vs[5]),
+		NumberIdx:  table.numbers.Append(vs[6]),
+	}
 }

@@ -31,20 +31,3 @@ func (r *IPRange) Contains(ip net.IP) bool {
 	//return r.low <= ipv && ipv <= r.high
 	return cmp(r.low, ip) <= 0 && cmp(ip, r.high) <= 0
 }
-
-func NewIPRange(
-	low, high net.IP,
-	startStr, endStr string,
-	countryIdx, ispIdx, provIdx, cityIdx, numberIdx int) *IPRange {
-	return &IPRange{
-		low:        low,
-		high:       high,
-		StartStr:   startStr,
-		EndStr:     endStr,
-		CountryIdx: countryIdx,
-		IspIdx:     ispIdx,
-		ProvIdx:    provIdx,
-		CityIdx:    cityIdx,
-		NumberIdx:  numberIdx,
-	}
-}
