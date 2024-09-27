@@ -6,52 +6,31 @@ import (
 	"net"
 )
 
-type IPRange interface {
-	StartStr() string
-	EndStr() string
-	CountryIdx() int
-	IspIdx() int
-	ProvIdx() int
-	CityIdx() int
-	NumberIdx() int
+type OriginData struct {
+	StartStr   string
+	EndStr     string
+	CountryIdx int
+	IspIdx     int
+	ProvIdx    int
+	CityIdx    int
+	NumberIdx  int
+}
 
+type IPRange interface {
+	OriginData() *OriginData
 	Cmp(IPRange) int
 	GTE(ip net.IP) bool
 	Contains(ip net.IP) bool
 }
 
 type V4Range struct {
+	originData *OriginData
 	low        uint32
 	high       uint32
-	startStr   string
-	endStr     string
-	countryIdx int
-	ispIdx     int
-	provIdx    int
-	cityIdx    int
-	numberIdx  int
 }
 
-func (r *V4Range) StartStr() string {
-	return r.startStr
-}
-func (r *V4Range) EndStr() string {
-	return r.endStr
-}
-func (r *V4Range) CountryIdx() int {
-	return r.countryIdx
-}
-func (r *V4Range) IspIdx() int {
-	return r.ispIdx
-}
-func (r *V4Range) ProvIdx() int {
-	return r.provIdx
-}
-func (r *V4Range) CityIdx() int {
-	return r.cityIdx
-}
-func (r *V4Range) NumberIdx() int {
-	return r.numberIdx
+func (r *V4Range) OriginData() *OriginData {
+	return r.originData
 }
 
 func (r *V4Range) Cmp(other IPRange) int {
@@ -86,38 +65,15 @@ func (r *V4Range) Contains(ip net.IP) bool {
 //
 
 type V6Range struct {
+	originData *OriginData
 	low        *extends.Int128
 	high       *extends.Int128
-	startStr   string
-	endStr     string
-	countryIdx int
-	ispIdx     int
-	provIdx    int
-	cityIdx    int
-	numberIdx  int
 }
 
-func (r *V6Range) StartStr() string {
-	return r.startStr
+func (r *V6Range) OriginData() *OriginData {
+	return r.originData
 }
-func (r *V6Range) EndStr() string {
-	return r.endStr
-}
-func (r *V6Range) CountryIdx() int {
-	return r.countryIdx
-}
-func (r *V6Range) IspIdx() int {
-	return r.ispIdx
-}
-func (r *V6Range) ProvIdx() int {
-	return r.provIdx
-}
-func (r *V6Range) CityIdx() int {
-	return r.cityIdx
-}
-func (r *V6Range) NumberIdx() int {
-	return r.numberIdx
-}
+
 func (r *V6Range) Cmp(other IPRange) int {
 	o := other.(*V6Range)
 

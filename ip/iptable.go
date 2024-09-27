@@ -33,13 +33,14 @@ func (t *IPTable) Less(i, j int) bool {
 }
 
 func (t *IPTable) StringOf(ipRange IPRange) string {
-	return ipRange.StartStr() + "|" +
-		ipRange.EndStr() + "|" +
-		t.countries.Get(ipRange.CountryIdx()) + "|" +
-		t.isps.Get(ipRange.IspIdx()) + "|" +
-		t.provs.Get(ipRange.ProvIdx()) + "|" +
-		t.cities.Get(ipRange.CityIdx()) + "|" +
-		t.numbers.Get(ipRange.NumberIdx())
+	data := ipRange.OriginData()
+	return data.StartStr + "|" +
+		data.EndStr + "|" +
+		t.countries.Get(data.CountryIdx) + "|" +
+		t.isps.Get(data.IspIdx) + "|" +
+		t.provs.Get(data.ProvIdx) + "|" +
+		t.cities.Get(data.CityIdx) + "|" +
+		t.numbers.Get(data.NumberIdx)
 }
 
 func (t *IPTable) Search(ipStr string) IPRange {

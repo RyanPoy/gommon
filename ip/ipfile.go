@@ -44,27 +44,31 @@ func parseRange(line string, table *IPTable, isV4 bool) IPRange {
 
 	if isV4 {
 		return &V4Range{
-			low:        *low.(*uint32),
-			high:       *high.(*uint32),
-			startStr:   vs[0],
-			endStr:     vs[1],
-			countryIdx: table.countries.Append(vs[2]),
-			ispIdx:     table.isps.Append(vs[3]),
-			provIdx:    table.provs.Append(vs[4]),
-			cityIdx:    table.cities.Append(vs[5]),
-			numberIdx:  table.numbers.Append(vs[6]),
+			low:  *low.(*uint32),
+			high: *high.(*uint32),
+			originData: &OriginData{
+				StartStr:   vs[0],
+				EndStr:     vs[1],
+				CountryIdx: table.countries.Append(vs[2]),
+				IspIdx:     table.isps.Append(vs[3]),
+				ProvIdx:    table.provs.Append(vs[4]),
+				CityIdx:    table.cities.Append(vs[5]),
+				NumberIdx:  table.numbers.Append(vs[6]),
+			},
 		}
 	}
 	return &V6Range{
-		low:        low.(*extends.Int128),
-		high:       high.(*extends.Int128),
-		startStr:   vs[0],
-		endStr:     vs[1],
-		countryIdx: table.countries.Append(vs[2]),
-		ispIdx:     table.isps.Append(vs[3]),
-		provIdx:    table.provs.Append(vs[4]),
-		cityIdx:    table.cities.Append(vs[5]),
-		numberIdx:  table.numbers.Append(vs[6]),
+		low:  low.(*extends.Int128),
+		high: high.(*extends.Int128),
+		originData: &OriginData{
+			StartStr:   vs[0],
+			EndStr:     vs[1],
+			CountryIdx: table.countries.Append(vs[2]),
+			IspIdx:     table.isps.Append(vs[3]),
+			ProvIdx:    table.provs.Append(vs[4]),
+			CityIdx:    table.cities.Append(vs[5]),
+			NumberIdx:  table.numbers.Append(vs[6]),
+		},
 	}
 }
 

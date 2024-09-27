@@ -70,8 +70,8 @@ func TestV4TableComplexSearch(t *testing.T) {
 			t.Errorf("Can not find [%s]", ip)
 			return
 		}
-		if ipRange.StartStr() != ip {
-			t.Errorf("Expected[%s], but[%s]", ip, ipRange.StartStr())
+		if ipRange.OriginData().StartStr != ip {
+			t.Errorf("Expected[%s], but[%s]", ip, ipRange.OriginData().StartStr)
 			return
 		}
 	}
@@ -116,8 +116,8 @@ func TestV6TableComplexSearch(t *testing.T) {
 			t.Errorf("Can not find [%s]", "240e:6af:4700:1111::")
 			return
 		}
-		if ipRange.StartStr() != ip {
-			t.Errorf("Expected[%s], but[%s]", ip, ipRange.StartStr())
+		if ipRange.OriginData().StartStr != ip {
+			t.Errorf("Expected[%s], but[%s]", ip, ipRange.OriginData().StartStr)
 			return
 		}
 	}
