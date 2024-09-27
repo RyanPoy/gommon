@@ -21,15 +21,15 @@ func LoadFile(fpath string) ([]string, error) {
 	}
 	return lines, nil
 }
-func ParseV4Range(line string, table *IPTable) IPRange {
+func ParseV4Range(line string, table *IPTable) *IPRange {
 	return parseRange(line, table, true)
 }
 
-func ParseV6Range(line string, table *IPTable) IPRange {
+func ParseV6Range(line string, table *IPTable) *IPRange {
 	return parseRange(line, table, false)
 }
 
-func parseRange(line string, table *IPTable, isV4 bool) IPRange {
+func parseRange(line string, table *IPTable, isV4 bool) *IPRange {
 	if line[0] == '#' {
 		return nil
 	}
@@ -49,12 +49,7 @@ func parseRange(line string, table *IPTable, isV4 bool) IPRange {
 	if cmp(low, high) == 1 {
 		low, high = high, low
 	}
-	if isV4 {
-		return NewV4Range(low, high, vs[0], vs[1], table.countries.Append(vs[2]), table.isps.Append(vs[3]),
-			table.provs.Append(vs[4]), table.cities.Append(vs[5]), table.numbers.Append(vs[6]),
-		)
-	}
-	return NewV6Range(low, high, vs[0], vs[1], table.countries.Append(vs[2]), table.isps.Append(vs[3]),
+	return NewIPRange(low, high, vs[0], vs[1], table.countries.Append(vs[2]), table.isps.Append(vs[3]),
 		table.provs.Append(vs[4]), table.cities.Append(vs[5]), table.numbers.Append(vs[6]),
 	)
 }

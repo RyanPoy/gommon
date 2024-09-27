@@ -16,13 +16,25 @@ func main() {
 	}()
 
 	// 你的应用逻辑
-	runApp()
+	runAppV4()
+	//runAppV6()
 }
 
-func runApp() {
+func runAppV4() {
+	fpath := "./ip/test_data/mgiplib-std.txt.latest"
+	v4s, _ := ip.NewV4Table(fpath)
+	ips, _ := LoadIP(fpath)
+	for {
+		for _, v := range ips {
+			v4s.Search(v)
+		}
+	}
+}
+
+func runAppV6() {
 	fpath := "./ip/test_data/mgiplib-v6-std.txt.latest"
 	v6s, _ := ip.NewV6Table(fpath)
-	ips, _ := LoadV6(fpath)
+	ips, _ := LoadIP(fpath)
 	for {
 		for _, v := range ips {
 			v6s.Search(v)
@@ -30,7 +42,7 @@ func runApp() {
 	}
 }
 
-func LoadV6(fpath string) ([]string, error) {
+func LoadIP(fpath string) ([]string, error) {
 	f, err := os.Open(fpath)
 	if err != nil {
 		return nil, err

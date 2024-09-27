@@ -2,36 +2,26 @@ package ip
 
 import (
 	"gommon/convert"
+	"net"
 	"sort"
 )
 
-type Searcher interface {
-	Search(ipStr string, table *IPTable) IPRange
+func SearchV4(ipStr string, table *IPTable) *IPRange {
+	ip := convert.IPStr2IPv4(ipStr)
+	return search(ip, table)
 }
 
-type V4Searcher struct{}
+func SearchV6(ipStr string, table *IPTable) *IPRange {
+	ip := convert.IPStr2IPv6(ipStr)
+	return search(ip, table)
+}
 
-func (s *V4Searcher) Search(ipStr string, table *IPTable) IPRange {
-	ip := convert.IPStr2IPv4(ipStr)
+func search(ip net.IP, table *IPTable) *IPRange {
 	if ip == nil {
 		return nil
 	}
 	idx := sort.Search(len(table.data), func(i int) bool {
-		return table.data[i].GTE(ip)
-	})
-
-	if idx < len(table.data) && table.data[idx].Contains(ip) {
-		return table.data[idx]
-	}
-	return nil
-}
-
-type V6Searcher struct{}
-
-func (s *V6Searcher) Search(ipStr string, table *IPTable) IPRange {
-	ip := convert.IPStr2IPv6(ipStr)
-	idx := sort.Search(len(table.data), func(i int) bool {
-		return table.data[i].GTE(ip)
+		return cmp(table.data[i].low, ip) == 1 || cmp(table.data[i].high, ip) != -1
 	})
 
 	if idx < len(table.data) && table.data[idx].Contains(ip) {

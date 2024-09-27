@@ -6,17 +6,17 @@ import (
 )
 
 type IPTable struct {
-	data      []IPRange
+	data      []*IPRange
 	countries *extends.Array
 	isps      *extends.Array
 	provs     *extends.Array
 	cities    *extends.Array
 	numbers   *extends.Array
 
-	searcher Searcher
+	searchFunc func(ipStr string, table *IPTable) *IPRange
 }
 
-func (t *IPTable) Add(x IPRange) {
+func (t *IPTable) Add(x *IPRange) {
 	t.data = append(t.data, x)
 }
 
@@ -32,48 +32,47 @@ func (t *IPTable) Less(i, j int) bool {
 	return t.data[i].Cmp(t.data[j]) < 0
 }
 
-func (t *IPTable) StringOf(ipRange IPRange) string {
-	data := ipRange.OriginData()
-	return data.StartStr + "|" +
-		data.EndStr + "|" +
-		t.countries.Get(data.CountryIdx) + "|" +
-		t.isps.Get(data.IspIdx) + "|" +
-		t.provs.Get(data.ProvIdx) + "|" +
-		t.cities.Get(data.CityIdx) + "|" +
-		t.numbers.Get(data.NumberIdx)
+func (t *IPTable) StringOf(ipRange *IPRange) string {
+	return ipRange.StartStr + "|" +
+		ipRange.EndStr + "|" +
+		t.countries.Get(ipRange.CountryIdx) + "|" +
+		t.isps.Get(ipRange.IspIdx) + "|" +
+		t.provs.Get(ipRange.ProvIdx) + "|" +
+		t.cities.Get(ipRange.CityIdx) + "|" +
+		t.numbers.Get(ipRange.NumberIdx)
 }
 
-func (t *IPTable) Search(ipStr string) IPRange {
-	return t.searcher.Search(ipStr, t)
+func (t *IPTable) Search(ipStr string) *IPRange {
+	return t.searchFunc(ipStr, t)
 }
 
 func NewV4Table(fpath string) (*IPTable, error) {
 	table := &IPTable{
-		data:      make([]IPRange, 0),
-		countries: extends.NewArray(),
-		isps:      extends.NewArray(),
-		provs:     extends.NewArray(),
-		cities:    extends.NewArray(),
-		numbers:   extends.NewArray(),
-		searcher:  &V4Searcher{},
+		data:       make([]*IPRange, 0),
+		countries:  extends.NewArray(),
+		isps:       extends.NewArray(),
+		provs:      extends.NewArray(),
+		cities:     extends.NewArray(),
+		numbers:    extends.NewArray(),
+		searchFunc: SearchV4,
 	}
 	return newTable(fpath, table, ParseV4Range)
 }
 
 func NewV6Table(fpath string) (*IPTable, error) {
 	table := &IPTable{
-		data:      make([]IPRange, 0),
-		countries: extends.NewArray(),
-		isps:      extends.NewArray(),
-		provs:     extends.NewArray(),
-		cities:    extends.NewArray(),
-		numbers:   extends.NewArray(),
-		searcher:  &V6Searcher{},
+		data:       make([]*IPRange, 0),
+		countries:  extends.NewArray(),
+		isps:       extends.NewArray(),
+		provs:      extends.NewArray(),
+		cities:     extends.NewArray(),
+		numbers:    extends.NewArray(),
+		searchFunc: SearchV6,
 	}
 	return newTable(fpath, table, ParseV6Range)
 }
 
-func newTable(fpath string, table *IPTable, parseRange func(string, *IPTable) IPRange) (*IPTable, error) {
+func newTable(fpath string, table *IPTable, parseRange func(string, *IPTable) *IPRange) (*IPTable, error) {
 	lines, err := LoadFile(fpath)
 	if err != nil {
 		return nil, err
