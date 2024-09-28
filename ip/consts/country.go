@@ -1,11 +1,5 @@
 package consts
 
-type Country struct {
-	Name          string
-	Timezone      string
-	ContinentCode string
-}
-
 var CountryDict = map[string]Country{
 	"AD": {"安道尔", "Europe/Andorra", "EU"},
 	"AE": {"阿联酋", "Asia/Dubai", "AS"},
@@ -254,6 +248,12 @@ var CountryDict = map[string]Country{
 	"ZA": {"南非", "Africa/Johannesburg", "AF"},
 	"ZM": {"赞比亚", "Africa/Lusaka", "AF"},
 	"ZW": {"津巴布韦", "Africa/Harare", "AF"},
+}
+
+type Country struct {
+	Name          string
+	Timezone      string
+	ContinentCode string
 }
 
 // CountryName 国家名称
