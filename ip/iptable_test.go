@@ -53,8 +53,8 @@ func TestSearch(t *testing.T) {
 			t.Errorf("Expected to get [%s], but got [%s]", expected, table.StringOf(ipRange))
 			return
 		}
-		if !reflect.DeepEqual(table.Area(ipRange), expectedMap) {
-			t.Errorf("Expected to get [%v], but got [%v]", expectedMap, table.Area(ipRange))
+		if !reflect.DeepEqual(table.AreaOf(ipRange), expectedMap) {
+			t.Errorf("Expected to get [%v], but got [%v]", expectedMap, table.AreaOf(ipRange))
 			return
 		}
 	}
