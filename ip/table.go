@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"gommon/extends/array"
 	"net"
 	"os"
 	"sort"
@@ -19,11 +18,11 @@ func isV4(ipStr string) bool {
 type Table struct {
 	v4s       V4IntervalList
 	v6s       V6IntervalList
-	countries *array.Array
-	isps      *array.Array
-	provs     *array.Array
-	cities    *array.Array
-	numbers   *array.Array
+	countries *Array
+	isps      *Array
+	provs     *Array
+	cities    *Array
+	numbers   *Array
 }
 
 func (t *Table) AddV4(x *V4Interval) {
@@ -113,11 +112,11 @@ func NewIPTable(fpaths ...string) (*Table, error) {
 	table := &Table{
 		v4s:       make(V4IntervalList, 0),
 		v6s:       make(V6IntervalList, 0),
-		countries: array.New(),
-		isps:      array.New(),
-		provs:     array.New(),
-		cities:    array.New(),
-		numbers:   array.New(),
+		countries: array(),
+		isps:      array(),
+		provs:     array(),
+		cities:    array(),
+		numbers:   array(),
 	}
 
 	for _, fpath := range fpaths {
