@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -40,7 +41,7 @@ func (t *Table) StringOf(ipRange *Interval) string {
 		t.isps.Get(ipRange.IspIdx) + "|" +
 		t.provs.Get(ipRange.ProvIdx) + "|" +
 		t.cities.Get(ipRange.CityIdx) + "|" +
-		t.numbers.Get(ipRange.NumberIdx)
+		strconv.Itoa(ipRange.Number)
 }
 
 func (t *Table) AreaOf(ipRange *Interval) map[string]string {
@@ -162,6 +163,12 @@ func initFromFile(fpath string, table *Table) (*Table, error) {
 		if bytes.Compare(low, high) == 1 {
 			low, high = high, low
 		}
+		number := 0
+		number, err = strconv.Atoi(parts[6])
+		if err != nil {
+			number = 0
+		}
+
 		if isV4 {
 			table.AddV4(&V4Interval{
 				Low:  binary.BigEndian.Uint32(low),
@@ -173,7 +180,7 @@ func initFromFile(fpath string, table *Table) (*Table, error) {
 					IspIdx:     table.isps.Append(parts[3]),
 					ProvIdx:    table.provs.Append(parts[4]),
 					CityIdx:    table.cities.Append(parts[5]),
-					NumberIdx:  table.numbers.Append(parts[6]),
+					Number:     number,
 				},
 			})
 		} else {
@@ -187,7 +194,7 @@ func initFromFile(fpath string, table *Table) (*Table, error) {
 					IspIdx:     table.isps.Append(parts[3]),
 					ProvIdx:    table.provs.Append(parts[4]),
 					CityIdx:    table.cities.Append(parts[5]),
-					NumberIdx:  table.numbers.Append(parts[6]),
+					Number:     number,
 				},
 			})
 		}

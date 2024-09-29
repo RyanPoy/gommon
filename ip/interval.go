@@ -37,7 +37,7 @@ type Interval struct {
 	IspIdx     int
 	ProvIdx    int
 	CityIdx    int
-	NumberIdx  int
+	Number     int
 	Contains   func(ip net.IP) bool
 	Gte        func(ip net.IP) bool
 }
