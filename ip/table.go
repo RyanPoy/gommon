@@ -2,9 +2,9 @@ package ip
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/binary"
 	"gommon/extends/array"
-	"gommon/ip/consts"
 	"net"
 	"os"
 	"sort"
@@ -15,9 +15,9 @@ func isV4(ipStr string) bool {
 	return strings.Contains(ipStr, ".")
 }
 
-type IPTable struct {
-	v4s       V4Ranges
-	v6s       V6Ranges
+type Table struct {
+	v4s       V4IntervalList
+	v6s       V6IntervalList
 	countries *array.Array
 	isps      *array.Array
 	provs     *array.Array
@@ -25,15 +25,15 @@ type IPTable struct {
 	numbers   *array.Array
 }
 
-func (t *IPTable) AddV4(x *V4Range) {
+func (t *Table) AddV4(x *V4Interval) {
 	t.v4s = append(t.v4s, x)
 }
 
-func (t *IPTable) AddV6(x *V6Range) {
+func (t *Table) AddV6(x *V6Interval) {
 	t.v6s = append(t.v6s, x)
 }
 
-func (t *IPTable) StringOfV4(ipRange *V4Range) string {
+func (t *Table) StringOf(ipRange *Interval) string {
 	return ipRange.StartStr + "|" +
 		ipRange.EndStr + "|" +
 		t.countries.Get(ipRange.CountryIdx) + "|" +
@@ -42,18 +42,10 @@ func (t *IPTable) StringOfV4(ipRange *V4Range) string {
 		t.cities.Get(ipRange.CityIdx) + "|" +
 		t.numbers.Get(ipRange.NumberIdx)
 }
-func (t *IPTable) StringOfV6(ipRange *V6Range) string {
-	return ipRange.StartStr + "|" +
-		ipRange.EndStr + "|" +
-		t.countries.Get(ipRange.CountryIdx) + "|" +
-		t.isps.Get(ipRange.IspIdx) + "|" +
-		t.provs.Get(ipRange.ProvIdx) + "|" +
-		t.cities.Get(ipRange.CityIdx) + "|" +
-		t.numbers.Get(ipRange.NumberIdx)
-}
-func (t *IPTable) AreaOf(ipRange *IPRange) map[string]string {
+
+func (t *Table) AreaOf(ipRange *Interval) map[string]string {
 	countryCode := t.countries.Get(ipRange.CountryIdx)
-	country := consts.CountryOf(countryCode)
+	country := CountryOf(countryCode)
 	return map[string]string{
 		"country":   country.Name,
 		"timezone":  country.Timezone,
@@ -64,53 +56,38 @@ func (t *IPTable) AreaOf(ipRange *IPRange) map[string]string {
 	}
 }
 
-func (t *IPTable) SearchV4(ipv4 string) *V4Range {
-	ip := net.ParseIP(ipv4)
+func (t *Table) Search(ipStr string) *Interval {
+	ip := net.ParseIP(ipStr)
 	if ip == nil {
 		return nil
 	}
-	ip = ip.To4()
-	if ip == nil {
-		return nil
-	}
-	ranges := t.v4s
-	idx := sort.Search(len(ranges), func(i int) bool {
-		return ranges[i].Gte(ip)
-		//return cmp(ranges[i].Low, ip) == 1 || cmp(ranges[i].High, ip) != -1
-	})
 
-	if idx < len(ranges) && ranges[idx].Contains(ip) {
-		return ranges[idx]
+	if isV4(ipStr) {
+		return &t.SearchV4(ip.To4()).Interval
 	}
-	return nil
+	return &t.SearchV6(ip.To16()).Interval
 }
 
-func (t *IPTable) SearchV6(ipv6 string) *V6Range {
-	ip := net.ParseIP(ipv6)
+func (t *Table) SearchV4(ip net.IP) *V4Interval {
 	if ip == nil {
 		return nil
 	}
-	ip = ip.To16()
-	if ip == nil {
-		return nil
-	}
-	ranges := t.v6s
-	idx := sort.Search(len(ranges), func(i int) bool {
-		return ranges[i].Gte(ip)
-		//return cmp(ranges[i].Low, ip) == 1 || cmp(ranges[i].High, ip) != -1
-	})
-
-	if idx < len(ranges) && ranges[idx].Contains(ip) {
-		return ranges[idx]
-	}
-	return nil
+	return t.v4s.Search(ip)
 }
 
-func (t *IPTable) sortAndUniq() {
+func (t *Table) SearchV6(ip net.IP) *V6Interval {
+	if ip == nil {
+		return nil
+	}
+	return t.v6s.Search(ip)
+
+}
+
+func (t *Table) sortAndUniq() {
 	sort.Sort(&t.v4s)
 	sort.Sort(&t.v6s)
 
-	uniqV4s, uniqV6s := make(V4Ranges, 0), make(V6Ranges, 0)
+	uniqV4s, uniqV6s := make(V4IntervalList, 0), make(V6IntervalList, 0)
 	if len(t.v4s) > 0 {
 		uniqV4s = append(uniqV4s, t.v4s[0])
 		for i := 1; i < len(t.v4s); i++ {
@@ -130,11 +107,11 @@ func (t *IPTable) sortAndUniq() {
 	t.v4s, t.v6s = uniqV4s, uniqV6s
 }
 
-func NewIPTable(fpaths ...string) (*IPTable, error) {
+func NewIPTable(fpaths ...string) (*Table, error) {
 	var err error
-	table := &IPTable{
-		v4s:       make(V4Ranges, 0),
-		v6s:       make(V6Ranges, 0),
+	table := &Table{
+		v4s:       make(V4IntervalList, 0),
+		v6s:       make(V6IntervalList, 0),
 		countries: array.New(),
 		isps:      array.New(),
 		provs:     array.New(),
@@ -151,7 +128,7 @@ func NewIPTable(fpaths ...string) (*IPTable, error) {
 	return table, nil
 }
 
-func initFromFile(fpath string, table *IPTable) (*IPTable, error) {
+func initFromFile(fpath string, table *Table) (*Table, error) {
 	f, err := os.Open(fpath)
 	if err != nil {
 		return nil, err
@@ -182,15 +159,14 @@ func initFromFile(fpath string, table *IPTable) (*IPTable, error) {
 		if low == nil || high == nil {
 			continue
 		}
-		if cmp(low, high) == 1 {
+		if bytes.Compare(low, high) == 1 {
 			low, high = high, low
 		}
 		if isV4 {
-			v1, v2 := binary.BigEndian.Uint32(low), binary.BigEndian.Uint32(high)
-			table.AddV4(&V4Range{
-				Low:  v1,
-				High: v2,
-				IPRange: IPRange{
+			table.AddV4(&V4Interval{
+				Low:  binary.BigEndian.Uint32(low),
+				High: binary.BigEndian.Uint32(high),
+				Interval: Interval{
 					StartStr:   parts[0],
 					EndStr:     parts[1],
 					CountryIdx: table.countries.Append(parts[2]),
@@ -201,10 +177,10 @@ func initFromFile(fpath string, table *IPTable) (*IPTable, error) {
 				},
 			})
 		} else {
-			table.AddV6(&V6Range{
-				Low:  low,
-				High: high,
-				IPRange: IPRange{
+			table.AddV6(&V6Interval{
+				Low:  u128(low),
+				High: u128(high),
+				Interval: Interval{
 					StartStr:   parts[0],
 					EndStr:     parts[1],
 					CountryIdx: table.countries.Append(parts[2]),
