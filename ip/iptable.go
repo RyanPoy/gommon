@@ -188,8 +188,8 @@ func initFromFile(fpath string, table *IPTable) (*IPTable, error) {
 		if isV4 {
 			v1, v2 := binary.BigEndian.Uint32(low), binary.BigEndian.Uint32(high)
 			table.AddV4(&V4Range{
-				Low:  &v1,
-				High: &v2,
+				Low:  v1,
+				High: v2,
 				IPRange: IPRange{
 					StartStr:   parts[0],
 					EndStr:     parts[1],

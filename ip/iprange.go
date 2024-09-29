@@ -23,15 +23,15 @@ type IPRange struct {
 
 type V4Range struct {
 	IPRange
-	Low  *uint32
-	High *uint32
+	Low  uint32
+	High uint32
 }
 
 func (r *V4Range) Cmp(other *V4Range) int {
-	if *r.Low > *other.High {
+	if r.Low > other.High {
 		return 1
 	}
-	if *r.Low < *other.High {
+	if r.Low < other.High {
 		return -1
 	}
 	return 0
@@ -46,7 +46,7 @@ func (r *V4Range) Cmp(other *V4Range) int {
 }
 func (r *V4Range) Contains(ip net.IP) bool {
 	ipv := binary.BigEndian.Uint32(ip)
-	return *r.Low <= ipv && ipv <= *r.High
+	return r.Low <= ipv && ipv <= r.High
 
 	//ipv := binary.BigEndian.Uint32(ip)
 	//low, high := binary
@@ -56,7 +56,7 @@ func (r *V4Range) Contains(ip net.IP) bool {
 func (r *V4Range) Gte(ip net.IP) bool {
 	//cmp(r.Low, ip) == 1 || cmp(r.High, ip) != -1
 	ipv := binary.BigEndian.Uint32(ip)
-	return *r.Low > ipv || *r.High >= ipv
+	return r.Low > ipv || r.High >= ipv
 }
 
 type V6Range struct {
