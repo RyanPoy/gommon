@@ -9,11 +9,13 @@ import (
 	"testing"
 )
 
-var fpaths = []string{
-	"./test_data/a.v4.txt",
-	"./test_data/mgiplib-std.txt.latest",
-	"./test_data/mgiplib-v6-std.txt.latest",
-}
+const (
+	simple_v4_fpath = "./test_data/a.v4.txt"
+	full_v4_fpath   = "./test_data/mgiplib-std.txt.latest"
+	full_v6_fpath   = "./test_data/mgiplib-v6-std.txt.latest"
+)
+
+var fpaths = []string{simple_v4_fpath, full_v4_fpath, full_v6_fpath}
 
 func TestInitTable(t *testing.T) {
 	if _, err := ip.NewIPTable(fpaths...); err != nil {
@@ -107,4 +109,38 @@ func loadIP(fpaths ...string) ([]string, error) {
 	}
 
 	return lines, nil
+}
+
+func BenchmarkSearchV4(b *testing.B) {
+	table, _ := ip.NewIPTable(fpaths...)
+	//ips, _ := loadIP(full_v4_fpath)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			table.Search("27.190.250.164")
+			//for _, ipStr := range ips {
+			//	table.Search(ipStr)
+			//}
+		}
+	})
+}
+
+func BenchmarkSearchV6(b *testing.B) {
+	table, _ := ip.NewIPTable(fpaths...)
+	//ips, _ := loadIP(full_v6_fpath)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			table.Search("2001:218:0:2000::147")
+			//for _, ipStr := range ips {
+			//	table.Search(ipStr)
+			//}
+		}
+	})
 }
