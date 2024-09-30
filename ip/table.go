@@ -10,13 +10,13 @@ import (
 	"strings"
 )
 
-func isV4(ipStr string) bool {
+func IsV4(ipStr string) bool {
 	return strings.Contains(ipStr, ".")
 }
 
 type Table struct {
-	v4s       V4IntervalList
-	v6s       V6IntervalList
+	v4s       IntervalList
+	v6s       IntervalList
 	countries *Array
 	isps      *Array
 	provs     *Array
@@ -24,57 +24,59 @@ type Table struct {
 	numbers   *Array
 }
 
-func (t *Table) AddV4(x *V4Interval) {
-	t.v4s = append(t.v4s, x)
+func (t *Table) StringOf(ipRange Interval) string {
+	base := ipRange.BaseInfo()
+	return base.StartStr + "|" +
+		base.EndStr + "|" +
+		t.countries.Get(base.CountryIdx) + "|" +
+		t.isps.Get(base.IspIdx) + "|" +
+		t.provs.Get(base.ProvIdx) + "|" +
+		t.cities.Get(base.CityIdx) + "|" +
+		strconv.Itoa(base.Number)
 }
 
-func (t *Table) AddV6(x *V6Interval) {
-	t.v6s = append(t.v6s, x)
-}
-
-func (t *Table) StringOf(ipRange *Interval) string {
-	return ipRange.StartStr + "|" +
-		ipRange.EndStr + "|" +
-		t.countries.Get(ipRange.CountryIdx) + "|" +
-		t.isps.Get(ipRange.IspIdx) + "|" +
-		t.provs.Get(ipRange.ProvIdx) + "|" +
-		t.cities.Get(ipRange.CityIdx) + "|" +
-		strconv.Itoa(ipRange.Number)
-}
-
-func (t *Table) AreaOf(ipRange *Interval) map[string]string {
-	countryCode := t.countries.Get(ipRange.CountryIdx)
+func (t *Table) AreaOf(ipRange Interval) map[string]string {
+	base := ipRange.BaseInfo()
+	countryCode := t.countries.Get(base.CountryIdx)
 	country := CountryOf(countryCode)
 	return map[string]string{
 		"country":   country.Name,
 		"timezone":  country.Timezone,
 		"continent": country.ContinentCode,
-		"province":  t.provs.Get(ipRange.ProvIdx),
-		"city":      t.cities.Get(ipRange.CityIdx),
-		"isp":       t.isps.Get(ipRange.IspIdx),
+		"province":  t.provs.Get(base.ProvIdx),
+		"city":      t.cities.Get(base.CityIdx),
+		"isp":       t.isps.Get(base.IspIdx),
 	}
 }
 
-func (t *Table) Search(ipStr string) *Interval {
+func (t *Table) Search(ipStr string) Interval {
 	ip := net.ParseIP(ipStr)
 	if ip == nil {
 		return nil
 	}
 
-	if isV4(ipStr) {
-		return &t.SearchV4(ip.To4()).Interval
+	isV4 := IsV4(ipStr)
+	if isV4 {
+		if ip = ip.To4(); ip == nil {
+			return nil
+		}
+		return t.v4s.Search(ip)
+	} else {
+		if ip = ip.To16(); ip == nil {
+			return nil
+		}
+		return t.v6s.Search(ip)
 	}
-	return &t.SearchV6(ip.To16()).Interval
 }
 
-func (t *Table) SearchV4(ip net.IP) *V4Interval {
+func (t *Table) SearchV4(ip net.IP) Interval {
 	if ip == nil {
 		return nil
 	}
 	return t.v4s.Search(ip)
 }
 
-func (t *Table) SearchV6(ip net.IP) *V6Interval {
+func (t *Table) SearchV6(ip net.IP) Interval {
 	if ip == nil {
 		return nil
 	}
@@ -83,26 +85,22 @@ func (t *Table) SearchV6(ip net.IP) *V6Interval {
 }
 
 func (t *Table) sortAndUniq() {
-	//sort.Sort(&t.v4s)
-	//sort.Sort(&t.v6s)
-
 	t.v4s.Sort()
 	t.v6s.Sort()
-
-	uniqV4s, uniqV6s := make(V4IntervalList, 0), make(V6IntervalList, 0)
+	uniqV4s, uniqV6s := make(IntervalList, 0), make(IntervalList, 0)
 	if len(t.v4s) > 0 {
-		uniqV4s = append(uniqV4s, t.v4s[0])
+		uniqV4s.Add(t.v4s[0])
 		for i := 1; i < len(t.v4s); i++ {
 			if t.v4s[i].Cmp(t.v4s[i-1]) != 0 {
-				uniqV4s = append(uniqV4s, t.v4s[i])
+				uniqV4s.Add(t.v4s[i])
 			}
 		}
 	}
 	if len(t.v6s) > 0 {
-		uniqV6s = append(uniqV6s, t.v6s[0])
+		uniqV6s.Add(t.v6s[0])
 		for i := 1; i < len(t.v6s); i++ {
 			if t.v6s[i].Cmp(t.v6s[i-1]) != 0 {
-				uniqV6s = append(uniqV6s, t.v6s[i])
+				uniqV6s.Add(t.v6s[i])
 			}
 		}
 	}
@@ -112,8 +110,8 @@ func (t *Table) sortAndUniq() {
 func NewIPTable(fpaths ...string) (*Table, error) {
 	var err error
 	table := &Table{
-		v4s:       make(V4IntervalList, 0),
-		v6s:       make(V6IntervalList, 0),
+		v4s:       make(IntervalList, 0),
+		v6s:       make(IntervalList, 0),
 		countries: array(),
 		isps:      array(),
 		provs:     array(),
@@ -152,7 +150,7 @@ func initFromFile(fpath string, table *Table) (*Table, error) {
 			continue
 		}
 
-		isV4 := isV4(parts[0])
+		isV4 := IsV4(parts[0])
 		if isV4 {
 			low, high = low.To4(), high.To4()
 		} else {
@@ -171,10 +169,10 @@ func initFromFile(fpath string, table *Table) (*Table, error) {
 		}
 
 		if isV4 {
-			table.AddV4(&V4Interval{
+			table.v4s.Add(&V4Interval{
 				Low:  binary.BigEndian.Uint32(low),
 				High: binary.BigEndian.Uint32(high),
-				Interval: Interval{
+				baseInfo: &BaseInfo{
 					StartStr:   parts[0],
 					EndStr:     parts[1],
 					CountryIdx: table.countries.Append(parts[2]),
@@ -185,10 +183,10 @@ func initFromFile(fpath string, table *Table) (*Table, error) {
 				},
 			})
 		} else {
-			table.AddV6(&V6Interval{
+			table.v6s.Add(&V6Interval{
 				Low:  u128(low),
 				High: u128(high),
-				Interval: Interval{
+				baseInfo: &BaseInfo{
 					StartStr:   parts[0],
 					EndStr:     parts[1],
 					CountryIdx: table.countries.Append(parts[2]),

@@ -7,7 +7,14 @@ import (
 )
 
 // Interval is a ip range
-type Interval struct {
+type Interval interface {
+	BaseInfo() *BaseInfo
+	Cmp(o Interval) int
+	Gte(ip net.IP) bool
+	Contains(ip net.IP) bool
+}
+
+type BaseInfo struct {
 	StartStr   string
 	EndStr     string
 	CountryIdx int
@@ -15,18 +22,20 @@ type Interval struct {
 	ProvIdx    int
 	CityIdx    int
 	Number     int
-
-	//Cmp      func(other *Interval) int
-	Contains func(ip net.IP) bool
 }
 
 type V4Interval struct {
-	Interval
-	Low  uint32
-	High uint32
+	baseInfo *BaseInfo
+	Low      uint32
+	High     uint32
 }
 
-func (i *V4Interval) Cmp(other *V4Interval) int {
+func (i *V4Interval) BaseInfo() *BaseInfo {
+	return i.baseInfo
+}
+
+func (i *V4Interval) Cmp(o Interval) int {
+	other := o.(*V4Interval)
 	if i.Low > other.High {
 		return 1
 	}
@@ -35,18 +44,29 @@ func (i *V4Interval) Cmp(other *V4Interval) int {
 	}
 	return 0
 }
+
+func (i *V4Interval) Gte(ip net.IP) bool {
+	ipv := binary.BigEndian.Uint32(ip)
+	return i.Low > ipv || i.High >= ipv
+}
+
 func (i *V4Interval) Contains(ip net.IP) bool {
 	ipv := binary.BigEndian.Uint32(ip)
 	return i.Low <= ipv && ipv <= i.High
 }
 
 type V6Interval struct {
-	Interval
-	Low  *Uint128
-	High *Uint128
+	baseInfo *BaseInfo
+	Low      *Uint128
+	High     *Uint128
 }
 
-func (i *V6Interval) Cmp(other *V6Interval) int {
+func (i *V6Interval) BaseInfo() *BaseInfo {
+	return i.baseInfo
+}
+
+func (i *V6Interval) Cmp(o Interval) int {
+	other := o.(*V6Interval)
 	cmpHigh := i.High.Cmp(other.High)
 	if cmpHigh == 0 {
 		return i.Low.Cmp(other.Low)
@@ -60,19 +80,23 @@ func (i *V6Interval) Contains(ip net.IP) bool {
 	return i.Low.Cmp(ipv) <= 0 && ipv.Cmp(i.High) <= 0
 }
 
-type V4IntervalList []*V4Interval
+func (i *V6Interval) Gte(ip net.IP) bool {
+	ipv := u128(ip)
+	return i.Low.Cmp(ipv) == 1 || i.High.Cmp(ipv) != -1
+}
 
-func (lst V4IntervalList) Sort() {
-	obj := lst
+type IntervalList []Interval
+
+func (lst IntervalList) Sort() {
 	sort.Slice(lst, func(i, j int) bool {
-		return obj[i].Cmp(obj[j]) < 0
+		return lst[i].Cmp(lst[j]) < 0
 	})
 }
-func (lst V4IntervalList) Search(ip net.IP) *V4Interval {
+
+func (lst IntervalList) Search(ip net.IP) Interval {
 	length := len(lst)
 	idx := sort.Search(length, func(i int) bool {
-		ipv := binary.BigEndian.Uint32(ip)
-		return lst[i].Low > ipv || lst[i].High >= ipv
+		return lst[i].Gte(ip)
 	})
 
 	if idx < length && lst[idx].Contains(ip) {
@@ -81,24 +105,6 @@ func (lst V4IntervalList) Search(ip net.IP) *V4Interval {
 	return nil
 }
 
-type V6IntervalList []*V6Interval
-
-func (lst V6IntervalList) Sort() {
-	obj := lst
-	sort.Slice(lst, func(i, j int) bool {
-		return obj[i].Cmp(obj[j]) < 0
-	})
-}
-
-func (lst V6IntervalList) Search(ip net.IP) *V6Interval {
-	length := len(lst)
-	idx := sort.Search(length, func(i int) bool {
-		ipv := u128(ip)
-		return lst[i].Low.Cmp(ipv) == 1 || lst[i].High.Cmp(ipv) != -1
-	})
-
-	if idx < length && lst[idx].Contains(ip) {
-		return lst[idx]
-	}
-	return nil
+func (lst *IntervalList) Add(interval Interval) {
+	*lst = append(*lst, interval)
 }

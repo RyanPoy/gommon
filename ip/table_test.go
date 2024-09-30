@@ -75,14 +75,15 @@ func TestSearchAll(t *testing.T) {
 	table, _ := ip.NewIPTable(fpaths...)
 	searchIps, _ := loadIP(fpaths...)
 	for _, ipStr := range searchIps {
-		if strings.Contains(ipStr, ".") {
+		if ip.IsV4(ipStr) {
 			ipRange := table.Search(ipStr)
 			if ipRange == nil {
 				t.Errorf("Expected to find [%s], but not found", ipStr)
 				return
 			}
-			if ipRange.StartStr != ipStr {
-				t.Errorf("Expected to find [%s], but got [%s]", ipStr, ipRange.StartStr)
+			base := ipRange.BaseInfo()
+			if base.StartStr != ipStr {
+				t.Errorf("Expected to find [%s], but got [%s]", ipStr, base.StartStr)
 				return
 			}
 		} else {
@@ -91,8 +92,9 @@ func TestSearchAll(t *testing.T) {
 				t.Errorf("Expected to find [%s], but not found", ipStr)
 				return
 			}
-			if ipRange.StartStr != ipStr {
-				t.Errorf("Expected to find [%s], but got [%s]", ipStr, ipRange.StartStr)
+			base := ipRange.BaseInfo()
+			if base.StartStr != ipStr {
+				t.Errorf("Expected to find [%s], but got [%s]", ipStr, base.StartStr)
 				return
 			}
 		}
