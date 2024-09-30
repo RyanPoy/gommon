@@ -15,8 +15,9 @@ type Interval struct {
 	ProvIdx    int
 	CityIdx    int
 	Number     int
-	Contains   func(ip net.IP) bool
-	Gte        func(ip net.IP) bool
+
+	//Cmp      func(other *Interval) int
+	Contains func(ip net.IP) bool
 }
 
 type V4Interval struct {
@@ -61,16 +62,11 @@ func (i *V6Interval) Contains(ip net.IP) bool {
 
 type V4IntervalList []*V4Interval
 
-func (lst *V4IntervalList) Len() int {
-	return len(*lst)
-}
-func (lst *V4IntervalList) Swap(i, j int) {
-	obj := *lst
-	obj[i], obj[j] = obj[j], obj[i]
-}
-func (lst *V4IntervalList) Less(i, j int) bool {
-	obj := *lst
-	return obj[i].Cmp(obj[j]) < 0
+func (lst V4IntervalList) Sort() {
+	obj := lst
+	sort.Slice(lst, func(i, j int) bool {
+		return obj[i].Cmp(obj[j]) < 0
+	})
 }
 func (lst V4IntervalList) Search(ip net.IP) *V4Interval {
 	length := len(lst)
@@ -87,17 +83,13 @@ func (lst V4IntervalList) Search(ip net.IP) *V4Interval {
 
 type V6IntervalList []*V6Interval
 
-func (lst *V6IntervalList) Len() int {
-	return len(*lst)
+func (lst V6IntervalList) Sort() {
+	obj := lst
+	sort.Slice(lst, func(i, j int) bool {
+		return obj[i].Cmp(obj[j]) < 0
+	})
 }
-func (lst *V6IntervalList) Swap(i, j int) {
-	obj := *lst
-	obj[i], obj[j] = obj[j], obj[i]
-}
-func (lst *V6IntervalList) Less(i, j int) bool {
-	obj := *lst
-	return obj[i].Cmp(obj[j]) < 0
-}
+
 func (lst V6IntervalList) Search(ip net.IP) *V6Interval {
 	length := len(lst)
 	idx := sort.Search(length, func(i int) bool {

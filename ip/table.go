@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"net"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -84,8 +83,11 @@ func (t *Table) SearchV6(ip net.IP) *V6Interval {
 }
 
 func (t *Table) sortAndUniq() {
-	sort.Sort(&t.v4s)
-	sort.Sort(&t.v6s)
+	//sort.Sort(&t.v4s)
+	//sort.Sort(&t.v6s)
+
+	t.v4s.Sort()
+	t.v6s.Sort()
 
 	uniqV4s, uniqV6s := make(V4IntervalList, 0), make(V6IntervalList, 0)
 	if len(t.v4s) > 0 {
